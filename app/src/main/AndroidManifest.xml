@@ -40,6 +40,83 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- intentional: M8 components-family seeds — every component below is exported
+             on purpose; the hardened paths are runtime caller/path/param guards so the
+             exportedness itself can be toggled per challenge. -->
+        <provider
+            android:name=".challenges.components.SiegeVaultProvider"
+            android:authorities="com.droidsiege.vault"
+            android:exported="true" />
+
+        <activity
+            android:name=".challenges.components.ExportFlagActivity"
+            android:exported="true" />
+        <activity
+            android:name=".challenges.components.KeyedExportActivity"
+            android:exported="true" />
+        <service
+            android:name=".challenges.components.ExportMessengerService"
+            android:exported="true" />
+        <receiver
+            android:name=".challenges.components.ChainReceiver"
+            android:exported="true" />
+        <activity
+            android:name=".challenges.components.ChainActivity"
+            android:exported="true" />
+        <activity
+            android:name=".challenges.components.FlagVaultActivity"
+            android:exported="false" />
+        <activity
+            android:name=".challenges.components.ProxyActivity"
+            android:exported="true" />
+        <activity
+            android:name=".challenges.components.TokenProxyActivity"
+            android:exported="true" />
+        <activity
+            android:name=".challenges.components.GuardedVaultActivity"
+            android:exported="false" />
+        <activity
+            android:name=".challenges.components.DeputyActivity"
+            android:exported="true" />
+
+        <activity
+            android:name=".challenges.components.RecoverLinkActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="siege"
+                    android:host="recover" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".challenges.components.OfferLinkActivity"
+            android:exported="true">
+            <!-- intentional: no autoVerify — the M8 deeplink L3 seed -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="offers.siegeapp.dev" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".challenges.components.WebLinkActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="offers"
+                    android:host="load" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
