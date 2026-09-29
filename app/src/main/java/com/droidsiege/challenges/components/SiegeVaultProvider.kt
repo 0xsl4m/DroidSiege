@@ -16,10 +16,13 @@ import java.io.File
 private class VaultDb(context: Context) :
     SQLiteOpenHelper(context, "components_vault.db", null, 1) {
     override fun onCreate(db: SQLiteDatabase) {
+        // L1 table: only what /secrets may ever return
         db.execSQL("CREATE TABLE secrets(tag TEXT PRIMARY KEY, value TEXT)")
         db.execSQL("INSERT INTO secrets VALUES('hint', 'the lookup filter is injectable — see L3')")
         db.execSQL("INSERT INTO secrets VALUES('recovery', 'DS{components_provider_L1_3f86d1}')")
-        db.execSQL("INSERT INTO secrets VALUES('admin_recovery', 'DS{components_provider_L3_e07b52}')")
+        // L3 target table: reachable only through the injectable /lookup path
+        db.execSQL("CREATE TABLE hidden_secrets(tag TEXT PRIMARY KEY, value TEXT)")
+        db.execSQL("INSERT INTO hidden_secrets VALUES('admin_recovery', 'DS{components_provider_L3_e07b52}')")
     }
 
     override fun onUpgrade(
@@ -91,12 +94,12 @@ class SiegeVaultProvider : ContentProvider() {
         val query =
             if (secureMode()) {
                 db.readableDatabase.rawQuery(
-                    "SELECT tag, value FROM secrets WHERE tag = ?",
+                    "SELECT tag, value FROM hidden_secrets WHERE tag = ?",
                     arrayOf(filter),
                 )
             } else {
                 db.readableDatabase.rawQuery(
-                    "SELECT tag, value FROM secrets WHERE tag = '$filter'",
+                    "SELECT tag, value FROM hidden_secrets WHERE tag = '$filter'",
                     null,
                 )
             }
@@ -153,8 +156,8 @@ class SiegeVaultProvider : ContentProvider() {
 /** L4 helper: plants the app-private file the traversal is meant to reach. */
 object ProviderFiles {
     fun plantSecret(context: Context): File {
-        val dir = File(context.filesDir, "provider_files").apply { mkdirs() }
-        return File(dir, "secret_flag.txt").apply {
+        context.filesDir.mkdirs()
+        return File(context.filesDir, "secret_flag.txt").apply {
             writeText("DS{components_provider_L4_46d9f8}")
         }
     }

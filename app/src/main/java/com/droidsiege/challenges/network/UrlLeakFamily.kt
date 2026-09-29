@@ -135,6 +135,7 @@ class UrlLeakL1Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -177,6 +178,7 @@ class UrlLeakL2Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -218,6 +220,7 @@ class UrlLeakL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         val webView = android.webkit.WebView(androidx.compose.ui.platform.LocalContext.current)
         ActionChallengeScreen(
             secureMode = secureMode,
@@ -259,6 +262,7 @@ class UrlLeakL4Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         val context = androidx.compose.ui.platform.LocalContext.current
         ActionChallengeScreen(
             secureMode = secureMode,

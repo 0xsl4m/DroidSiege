@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.droidsiege.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Screen for artifact-based challenges: a short note plus buttons that perform the
@@ -37,6 +40,7 @@ fun ActionChallengeScreen(
     note: String? = null,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var status by rememberSaveable { mutableStateOf("") }
 
     Column(
@@ -54,7 +58,16 @@ fun ActionChallengeScreen(
         }
         actions.forEach { action ->
             Button(
-                onClick = { status = action.run(context, secureMode) },
+                onClick = {
+                    // actions may perform blocking I/O — always off the main thread
+                    scope.launch(Dispatchers.IO) {
+                        status = try {
+                            action.run(context, secureMode)
+                        } catch (boom: Exception) {
+                            "FAILED: ${boom.javaClass.simpleName}: ${boom.message}"
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(action.label)

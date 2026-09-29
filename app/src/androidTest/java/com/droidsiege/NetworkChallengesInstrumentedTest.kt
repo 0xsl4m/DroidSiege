@@ -1,10 +1,14 @@
 package com.droidsiege
 
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.droidsiege.challenges.network.MockBackend
 import com.droidsiege.challenges.network.NetworkClients
 import com.google.common.truth.Truth.assertThat
 import okhttp3.Request
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -83,5 +87,42 @@ class NetworkChallengesInstrumentedTest {
             ).execute()
         }.isFailure
         assertThat(pinHeld).isTrue()
+    }
+}
+
+/** F1 regression: in-app network KitActions must run off-main and surface the flag. */
+@RunWith(AndroidJUnit4::class)
+class NetworkKitActionUiTest {
+    @get:Rule
+    val composeRule = androidx.compose.ui.test.junit4.createComposeRule()
+
+    @Test
+    fun kitActionFetchRunsOffMainAndShowsTheFlag() {
+        MockBackend.ensureStarted()
+        composeRule.setContent {
+            com.droidsiege.ui.theme.DroidSiegeTheme {
+                com.droidsiege.challenges.common.ActionChallengeScreen(
+                    secureMode = false,
+                    actions = listOf(
+                        com.droidsiege.challenges.common.KitAction("fetch") { _, secure ->
+                            val client =
+                                if (!secure) MockBackend.plainClient() else MockBackend.defaultTlsClient()
+                            client.newCall(
+                                Request.Builder()
+                                    .url("http://127.0.0.1:${MockBackend.plainPort}/clear/L1")
+                                    .build(),
+                            ).execute().use { it.body!!.string() }
+                        },
+                    ),
+                )
+            }
+        }
+        composeRule.onNodeWithText("fetch").performClick()
+        composeRule.waitUntil(10_000) {
+            composeRule
+                .onAllNodesWithText("DS{network_cleartext_L1_61d4b8}", substring = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
     }
 }

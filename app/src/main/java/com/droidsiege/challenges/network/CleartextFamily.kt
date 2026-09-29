@@ -54,6 +54,7 @@ class CleartextL1Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             note = "Fetches the session recovery from the local endpoint.",
@@ -106,6 +107,7 @@ class CleartextL2Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -163,6 +165,7 @@ class CleartextL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -214,6 +217,7 @@ class CleartextL4Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(

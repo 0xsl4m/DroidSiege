@@ -37,6 +37,7 @@ class TrustAllL1Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -92,6 +93,7 @@ class TrustAllL2Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -151,6 +153,7 @@ class TrustAllL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -216,6 +219,7 @@ class TrustAllL4Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(

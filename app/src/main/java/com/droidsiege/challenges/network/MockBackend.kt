@@ -77,6 +77,7 @@ object MockBackend {
     private val localCertificate: HeldCertificate by lazy {
         HeldCertificate.Builder()
             .commonName(VIRTUAL_HOST)
+            .addSubjectAlternativeName(VIRTUAL_HOST)
             .addSubjectAlternativeName("localhost")
             .addSubjectAlternativeName("127.0.0.1")
             .build()

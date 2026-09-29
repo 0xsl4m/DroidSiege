@@ -38,6 +38,7 @@ class PinningL1Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -95,6 +96,7 @@ class PinningL2Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -154,6 +156,7 @@ class PinningL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(
@@ -214,6 +217,7 @@ class PinningL4Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
         ActionChallengeScreen(
             secureMode = secureMode,
             actions = listOf(

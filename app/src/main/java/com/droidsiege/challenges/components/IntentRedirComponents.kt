@@ -9,9 +9,11 @@ import android.os.Bundle
 class FlagVaultActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // the vault holds its own code when opened without an injected extra —
-        // exactly what a mutable/blank redirect exposes
-        val code = intent.getStringExtra("code") ?: ComponentFlags.REDIRECT_L3
+        // the vault shows an injected code, or the escrow code the app stored for
+        // itself (written by the L3 issue action in the insecure mode only)
+        val escrow = getSharedPreferences("siege_chain_prefs", MODE_PRIVATE)
+            .getString("escrow_code", "(no escrow code stored)")
+        val code = intent.getStringExtra("code") ?: escrow!!
         renderScreen(
             this,
             "Internal vault",

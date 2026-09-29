@@ -113,9 +113,16 @@ object PendingIntentVault {
         context: Context,
         secure: Boolean,
     ): String {
+        // the escrow code the mutable PI would expose lives in app storage —
+        // written only in the insecure mode
+        context.getSharedPreferences("siege_chain_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putString("escrow_code", if (!secure) ComponentFlags.REDIRECT_L3 else null)
+            .commit()
         val base =
             if (secure) {
-                Intent(context, FlagVaultActivity::class.java)
+                // hardened: explicit component to a benign screen — never the vault
+                Intent(context, OfferLinkActivity::class.java)
             } else {
                 Intent() // blank, implicit base — the bug
             }
