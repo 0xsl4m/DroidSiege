@@ -34,6 +34,28 @@ Built with a **modern stack** (Kotlin, Jetpack Compose, Coroutines, Room, Hilt) 
 
 ---
 
+## 🧩 The app: SiegeApp
+
+Instead of a bare list of buttons, DroidSiege is a believable fictional **"super app"** called
+**SiegeApp**. Each module is a realistic screen that naturally hosts a family of vulnerabilities —
+so you learn to find bugs in context, the way you would against a real target.
+
+| Module | Hosts |
+|--------|-------|
+| 🔐 **Login / Auth** | credential usage, session/JWT, PIN & biometric |
+| 💳 **Wallet / Payments** | IDOR/BOLA (backend), cryptography, insecure storage |
+| 🗄️ **Vault** (notes & secrets) | insecure storage, weak crypto |
+| 💬 **Chat / Messages** | input injection, local SQLi, WebView XSS |
+| 📰 **Offers / News** (WebView) | JS-bridge abuse, deep links, insecure Custom Tabs |
+| 👤 **Profile** | mass assignment, privacy / PII leakage |
+| ⚙️ **Settings** | exported components, backup exfiltration, screenshot exposure |
+
+The modules are intentionally *believable, not fully functional* — just enough product to make
+each vulnerability feel real. Challenges are reached both through the module screens and through
+the Challenges hub (grouped by OWASP category with difficulty tiers).
+
+---
+
 ## 🎯 Vulnerability coverage (OWASP Mobile Top 10 · 2024)
 
 | # | Category | Status |
