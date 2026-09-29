@@ -16,7 +16,7 @@ echo "adb shell am start -a android.intent.action.VIEW -d 'offers://load?url=fil
 
 echo
 echo "== fileaccess L3: provider traversal through the WebView =="
-echo "content://com.droidsiege.vault/files/notes/../../secret_flag.txt"
+echo "content://com.droidsiege.vault/files/notes/../../wv/wv_provider_escrow.txt"
 
 echo
 echo "== xss L1: reflected payload =="

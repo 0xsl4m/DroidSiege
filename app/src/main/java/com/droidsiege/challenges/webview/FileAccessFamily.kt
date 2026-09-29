@@ -200,7 +200,8 @@ class FileAccessL3Challenge : TieredChallenge(
             "app-private file without any native code in the attacker's hands.\n\n" +
             "Chains mean the provider must be fixed even if 'the WebView is trusted'.",
         mastgRefs = listOf("MASVS-PLATFORM-2", "MASTG-TEST-0x61"),
-        vulnerableSnippet = "webView.loadUrl(\"content://com.droidsiege.vault/files/notes/../../secret_flag.txt\")",
+        vulnerableSnippet = "webView.loadUrl(\n" +
+            "    \"content://com.droidsiege.vault/files/notes/../../wv/wv_provider_escrow.txt\")",
         fixSnippet = "// provider canonicalizes; the traversal read fails",
         takeaway = "The WebView renders what the provider leaks — chains don't forgive.",
     ),
