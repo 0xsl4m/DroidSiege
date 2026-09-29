@@ -237,7 +237,7 @@ class HomegrownL4Challenge : TieredChallenge(
             "sortable clock.",
         mastgRefs = listOf("MASVS-CRYPTO-1", "MASTG-TEST-0x26"),
         vulnerableSnippet = "val prng = Random(issuedAtMinutes / 60)\n" +
-            "prng.nextBytes(keystream) // deterministic forever",
+            "prng.fillKeystream(keystream) // deterministic forever",
         fixSnippet = "SecureRandom().nextBytes(keystream) // OS entropy",
         takeaway = "Time-seeded randomness is just a slower lookup table.",
     ),

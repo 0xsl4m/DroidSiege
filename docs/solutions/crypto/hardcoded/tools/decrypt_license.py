@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """DroidSiege crypto/hardcoded — decrypt every license tier.
 
-L1: key = "droidsiege-static"[..16]                     (jadx constant)
+L1: key = "droidsiege-static".toByteArray().copyOf(16)  (jadx constant)
 L2: key = SHA-256(BuildConfig.WALLET_KEY_PART_A + "install_seed_2026")[..16]
 L3: key = SHA-256(partner_tag + sha256hex(signing cert))  (apksigner --print-certs)
 L4: half the bridge material is per-install and Keystore-wrapped — dump the
@@ -31,7 +31,7 @@ def cert_sha256_hex(apk):
 def main():
     blob = input("paste the license blob (base64): ").strip()
 
-    print("L1:", gcm_open(b"droidsiege-static", blob))
+    print("L1:", gcm_open(b"droidsiege-static"[:16], blob))
 
     part_a = "w4ll3t-p4rt-"
     key2 = hashlib.sha256((part_a + "install_seed_2026").encode()).digest()[:16]

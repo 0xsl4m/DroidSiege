@@ -243,7 +243,7 @@ class BackupL3Challenge : TieredChallenge(
     owaspRefs = listOf("M9", "MASVS-STORAGE-1", "MASTG-TEST-0x57"),
     hints = listOf(
         "Read res/xml/backup_rules.xml — what do the rules actually include?",
-        "The rules sweep every database into the cloud backup set, secure_store.db included.",
+        "The rules sweep every database into the cloud backup set, backup_vault.db included.",
         "The record is AES-GCM sealed — the passphrase is SHA-256(\"siege-cloud::\" + android_id)[..16].",
     ),
     flag = FLAG_L3,
@@ -257,7 +257,7 @@ class BackupL3Challenge : TieredChallenge(
         mastgRefs = listOf("MASVS-STORAGE-1", "MASTG-TEST-0x57"),
         vulnerableSnippet = "<include domain=\"database\" path=\".\"/>\n" +
             "<include domain=\"sharedpref\" path=\".\"/>",
-        fixSnippet = "<exclude domain=\"database\" path=\"secure_store.db\"/>\n" +
+        fixSnippet = "<exclude domain=\"database\" path=\"backup_vault.db\"/>\n" +
             "// allowlist only non-sensitive domains",
         takeaway = "Backup rules are an exfiltration config — review them like one.",
     ),

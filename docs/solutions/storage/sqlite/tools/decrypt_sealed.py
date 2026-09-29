@@ -2,7 +2,8 @@
 """DroidSiege storage/sqlite — decrypt the L3/L4 sealed records.
 
 L3 passphrase: SHA-256("droidsiege::" + ANDROID_ID)[..16]
-L4 bridge:     SHA-256("warp" + "-" + reversed("k3y-2026"))[..16]  (decompiled WarpKeyBridge)
+L4 bridge:     half per-install, Keystore-wrapped — dump the assembled key with
+               hook-secretkeyspec.js at gate time, then --warp-key <hex>
 """
 import hashlib
 import sqlite3

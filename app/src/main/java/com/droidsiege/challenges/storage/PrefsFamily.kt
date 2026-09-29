@@ -269,7 +269,8 @@ class PrefsL3Challenge : TieredChallenge(
             "A key the app can compute by itself, an attacker can compute too. Keys must " +
             "be generated and held by Android Keystore, which never releases the bytes.",
         mastgRefs = listOf("MASVS-STORAGE-1", "MASVS-CRYPTO-1", "MASTG-TEST-0x51"),
-        vulnerableSnippet = "private val secret = \"droidsiege_pref_secret_2024\" // strings.xml\n" +
+        vulnerableSnippet = "// ships as a plain Kotlin constant in PrefsVault:\n" +
+            "private val secret = \"droidsiege_pref_secret_2024\"\n" +
             "val key = SecretKeySpec(sha256(secret).copyOf(16), \"AES\")",
         fixSnippet = "val generator = KeyGenerator.getInstance(\"AES\", \"AndroidKeyStore\")\n" +
             "generator.init(KeyGenParameterSpec.Builder(\"session\", PURPOSE_ENCRYPT or PURPOSE_DECRYPT)…)\n" +

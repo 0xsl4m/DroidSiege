@@ -20,15 +20,14 @@ def entry(name):
     m = re.search(rf'<string name="{name}">([^<]+)</string>', RAW)
     return base64.b64decode(m.group(1)) if m else None
 
-def gcm_open(key, blob):
-    iv, ct = blob[:12], blob[12:]
+def gcm_open(key, iv, ct):
     return aead.AESGCM(key).decrypt(iv, ct, None)
 
 def main():
-    # L3 — derived key
+    # L3 — derived key; the app stores the IV in its own prefs entry
     key3 = hashlib.sha256(b"droidsiege_pref_secret_2024").digest()[:16]
     try:
-        print("L3 flag:", gcm_open(key3, entry("derived_flag")).decode())
+        print("L3 flag:", gcm_open(key3, entry("derived_iv"), entry("derived_flag")).decode())
     except Exception as e:
         print("L3: run 'Save release-keyed session' first (%s)" % e)
 
@@ -36,7 +35,7 @@ def main():
     mk = entry("master_key_hint")
     if mk:
         try:
-            print("L4 flag (via mirrored master key):", gcm_open(mk, entry("vault_flag")).decode())
+            print("L4 flag (via mirrored master key):", gcm_open(mk, entry("master_iv"), entry("vault_flag")).decode())
         except Exception as e:
             print("L4 mirrored-key path failed: %s" % e)
 

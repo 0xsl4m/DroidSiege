@@ -114,10 +114,10 @@ object EcbIvVault {
             } else {
                 "token accepted: ${String(pt)}"
             }
-        } catch (boom: javax.crypto.BadPaddingException) {
+        } catch (_: javax.crypto.BadPaddingException) {
             // the padding failure is distinguishable from other failures: an oracle
             if (secureMode) "token rejected" else "padding error"
-        } catch (boom: Exception) {
+        } catch (_: Exception) {
             if (secureMode) "token rejected" else "block size error"
         }
     }

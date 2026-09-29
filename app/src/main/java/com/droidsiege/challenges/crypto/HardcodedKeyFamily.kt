@@ -101,7 +101,7 @@ object HardcodedKeyVault {
         return listOf(
             "Install license (base64, iv||ct)" to b64(blob),
             "Part A" to "BuildConfig.WALLET_KEY_PART_A (gradle, see app/build.gradle.kts)",
-            "Part B" to "strings.xml: install_seed_2026",
+            "Part B" to "Kotlin literal in HardcodedKeyVault: install_seed_2026",
             "Derivation" to "AES key = SHA-256(partA + partB)[..16]",
         )
     }
@@ -176,7 +176,7 @@ class HardcodedL1Challenge : TieredChallenge(
     owaspRefs = listOf("M10", "MASVS-CRYPTO-1", "MASTG-TEST-0x24"),
     hints = listOf(
         "The AES key is a hardcoded 16-byte string in HardcodedKeyVault — decompile and read.",
-        "jadx: look for LicenseVault.L1_KEY, then decrypt the blob with any AES-GCM tool.",
+        "jadx: the 16-byte key is a literal inside HardcodedKeyVault — decrypt the blob with any AES-GCM tool.",
         "The blob is base64(iv||ciphertext) — 12-byte nonce first.",
     ),
     flag = FLAG_L1,
@@ -187,8 +187,9 @@ class HardcodedL1Challenge : TieredChallenge(
             "Symmetric keys must be generated per-install inside Android Keystore, " +
             "where they can be used but never exported.",
         mastgRefs = listOf("MASVS-CRYPTO-1", "MASTG-TEST-0x24"),
-        vulnerableSnippet = "val L1_KEY = \"droidsiege-static\" // 16 bytes\n" +
-            "val cipher = aesGcm(SecretKeySpec(L1_KEY.toByteArray(), \"AES\"), blob)",
+        vulnerableSnippet = "// the literal is 17 chars; the code truncates to a 16-byte key:\n" +
+            "SecretKeySpec(\"droidsiege-static\".toByteArray().copyOf(16), \"AES\")\n" +
+            "val cipher = aesGcm(key, blob) // AES/GCM",
         fixSnippet = "val kg = KeyGenerator.getInstance(\"AES\", \"AndroidKeyStore\")\n" +
             "kg.init(KeyGenParameterSpec.Builder(\"license\", PURPOSE_ENCRYPT or PURPOSE_DECRYPT).build())",
         takeaway = "Keys in source code are keys in the attacker's hands.",
