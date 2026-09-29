@@ -190,7 +190,7 @@ class IntentRedirL3Challenge : TieredChallenge(
         mastgRefs = listOf("MASVS-PLATFORM-1", "MASTG-TEST-0x64"),
         vulnerableSnippet = "PendingIntent.getActivity(ctx, 1001, Intent(),\n" +
             "    FLAG_UPDATE_CURRENT or FLAG_MUTABLE) // blank + mutable",
-        fixSnippet = "val intent = Intent(ctx, OfferActivity::class.java)\n" +
+        fixSnippet = "val intent = Intent(ctx, OfferLinkActivity::class.java)\n" +
             "PendingIntent.getActivity(ctx, 1001, intent,\n" +
             "    FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)",
         takeaway = "A mutable PendingIntent is your signature on someone else's intent.",
