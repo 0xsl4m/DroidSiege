@@ -24,7 +24,8 @@ class ScoreboardRepository
         ): Boolean {
             val existing = dao.byId(challenge.id.key)
             if (existing?.solved == true) return false
-            val award = HintPenalty.pointsAwarded(challenge.id.level.points, hintsUsed)
+            val boundedHintsUsed = hintsUsed.coerceIn(0, challenge.hints.size)
+            val award = HintPenalty.pointsAwarded(challenge.id.level.points, boundedHintsUsed)
             dao.upsert(
                 ScoreboardEntity(
                     idKey = challenge.id.key,
@@ -33,7 +34,7 @@ class ScoreboardRepository
                     level = challenge.id.level.name,
                     solved = true,
                     pointsAwarded = award,
-                    hintsUsed = hintsUsed,
+                    hintsUsed = boundedHintsUsed,
                     solvedAt = System.currentTimeMillis(),
                 ),
             )

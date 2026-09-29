@@ -57,8 +57,9 @@ class SettingsViewModel
 
         fun saveBackendUrl(url: String) {
             viewModelScope.launch {
-                if (url.startsWith("http://") || url.startsWith("https://")) {
-                    backendUrlStore.setBackendUrl(url.trim())
+                val trimmed = url.trim()
+                if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                    backendUrlStore.setBackendUrl(trimmed)
                     events.send(SettingsEvent.BackendUrlSaved)
                 } else {
                     events.send(SettingsEvent.BackendUrlInvalid)

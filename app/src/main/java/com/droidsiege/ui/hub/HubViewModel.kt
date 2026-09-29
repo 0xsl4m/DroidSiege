@@ -8,7 +8,7 @@ import com.droidsiege.engine.ScoreboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -31,24 +31,26 @@ class HubViewModel
         scoreboardRepository: ScoreboardRepository,
     ) : ViewModel() {
         val uiState: StateFlow<HubUiState> =
-            scoreboardRepository.observeAll()
-                .map { entries ->
-                    HubUiState(
-                        totalScore = entries.sumOf { it.pointsAwarded },
-                        solvedCount = entries.count { it.solved },
-                        categories =
-                            ChallengeRegistry.categories.map { meta ->
-                                CategoryProgress(
-                                    meta = meta,
-                                    solved = entries.count { it.category == meta.id && it.solved },
-                                    total = ChallengeRegistry.challengesByCategory(meta.id).size,
-                                )
-                            },
-                    )
-                }
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
-                    initialValue = HubUiState(totalScore = 0, solvedCount = 0, categories = emptyList()),
+            combine(
+                scoreboardRepository.observeAll(),
+                scoreboardRepository.totalScore,
+                scoreboardRepository.solvedCount,
+            ) { entries, totalScore, solvedCount ->
+                HubUiState(
+                    totalScore = totalScore,
+                    solvedCount = solvedCount,
+                    categories =
+                        ChallengeRegistry.categories.map { meta ->
+                            CategoryProgress(
+                                meta = meta,
+                                solved = entries.count { it.category == meta.id && it.solved },
+                                total = ChallengeRegistry.challengesByCategory(meta.id).size,
+                            )
+                        },
                 )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = HubUiState(totalScore = 0, solvedCount = 0, categories = emptyList()),
+            )
     }
