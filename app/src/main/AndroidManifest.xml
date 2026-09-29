@@ -80,6 +80,10 @@
             android:name=".challenges.components.DeputyActivity"
             android:exported="true" />
 
+        <!-- intentional: M8/M3 hidden-screen seed — no role check inside -->
+        <activity
+            android:name=".challenges.auth.AdminScreenActivity"
+            android:exported="true" />
         <activity
             android:name=".challenges.components.RecoverLinkActivity"
             android:exported="true">
