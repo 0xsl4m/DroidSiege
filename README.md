@@ -29,6 +29,9 @@ Most vulnerable Android apps give you one flat example per bug. DroidSiege is bu
 | **🎚️ Difficulty levels per vulnerability** | Every vulnerability ships in **4 tiers** — 🟢 `L1 Easy` → 🟡 `L2 Medium` → 🟠 `L3 Hard` → 🔴 `L4 Insane`. Beat the easy version, then face the same class with validation, obfuscation, and bypass requirements layered on. |
 | **🚩 Built-in CTF engine** | Each challenge hides a **flag**. Submit it in-app to score points, unlock hints, and track progress on a local **scoreboard**. |
 | **🔁 Secure / Insecure toggle** | Flip any challenge between its **vulnerable** and **hardened** implementation to see *exactly* what the fix looks like — turning every bug into a lesson. |
+| **📖 In-app Learn tab** | Every challenge has a built-in lesson: short theory, MASTG references, and a **before/after code diff** of the vulnerable vs. hardened code — so the app is also a course. |
+| **🦹 Companion attacker app** | A second app, **SiegeRaider**, launches **live exploits** against SiegeApp (exported components, insecure providers, intent redirection, deep-link hijack, tapjacking, task hijack) — see real IPC attacks, not just descriptions. |
+| **🧰 Tooling packs** | Each challenge ships ready-to-run **Frida scripts, objection commands, and Burp configs** in its solution write-up — bridging learning and hands-on practice. |
 
 Built with a **modern stack** (Kotlin, Jetpack Compose, Coroutines, Room, Hilt) and a companion **intentionally-insecure backend** for server-side classes (IDOR/BOLA, broken auth) — so it mirrors how apps are actually written today, not a decade ago.
 
