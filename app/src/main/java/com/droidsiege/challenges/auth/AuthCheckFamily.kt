@@ -194,8 +194,8 @@ class AuthCheckL4Challenge : TieredChallenge(
         "the role flip.",
     owaspRefs = listOf("M3", "MASVS-AUTH-2", "MASTG-TEST-0x52"),
     hints = listOf(
-        "Chain: forge an HS256 token (L3 key), then the gate XORs the token with the " +
-            "client role flag.",
+        "Chain: forge the HS256 admin claim, then flip the client role flag — the " +
+            "gate demands both artifacts.",
         "The gate opens only when BOTH client artifacts agree — claim and flag.",
         "Secure builds: server entitlements end the chain before it starts.",
     ),

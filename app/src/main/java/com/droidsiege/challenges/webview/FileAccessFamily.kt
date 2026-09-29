@@ -23,7 +23,7 @@ import com.droidsiege.core.LearnContent
 import java.io.File
 
 private const val SECRET_FILE_L1 = "wv_secret.txt"
-private const val SECRET_FILE_L3 = "secret_flag.txt"
+private const val SECRET_FILE_L3 = "wv_provider_escrow.txt"
 private const val SECRET_FILE_L4 = "wv_escrow.txt"
 
 private fun plantWebViewSecret(
@@ -189,7 +189,7 @@ class FileAccessL3Challenge : TieredChallenge(
         "WebView renders any content: chain the provider into the reader.",
     owaspRefs = listOf("M4", "MASVS-PLATFORM-2", "M8", "MASTG-TEST-0x58"),
     hints = listOf(
-        "content://com.droidsiege.vault/files/notes/../../secret_flag.txt (plant first).",
+        "content://com.droidsiege.vault/files/notes/../../wv/wv_provider_escrow.txt (plant first).",
         "The WebView loads the content:// URL; the provider resolves the traversal.",
         "Hardened: the provider canonicalizes and the read is refused.",
     ),
@@ -209,7 +209,8 @@ class FileAccessL3Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         val context = LocalContext.current
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            plantWebViewSecret(context, SECRET_FILE_L3, WebViewFlags.FILE_L3)
+            val wvDir = File(context.filesDir, "wv").apply { mkdirs() }
+            File(wvDir, SECRET_FILE_L3).writeText(WebViewFlags.FILE_L3)
         }
         var output by remember { mutableStateOf("") }
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
@@ -225,7 +226,7 @@ class FileAccessL3Challenge : TieredChallenge(
                         }
                     }
                     webView.loadUrl(
-                        "content://com.droidsiege.vault/files/notes/../../$SECRET_FILE_L3",
+                        "content://com.droidsiege.vault/files/notes/../../wv/$SECRET_FILE_L3",
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
