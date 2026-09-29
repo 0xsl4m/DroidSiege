@@ -13,8 +13,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DroidSiege"
         android:usesCleartextTraffic="true">
+        <!-- intentional: usesCleartextTraffic above is the M5/M7 cleartext seed -->
 
-        <!-- intentional: see M5/M7 challenges -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
