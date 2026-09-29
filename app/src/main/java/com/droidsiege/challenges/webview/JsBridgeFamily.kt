@@ -36,7 +36,7 @@ internal fun BridgeHost(
     requireToken: Boolean = false,
     withFileReader: Boolean = false,
     /** the one secret THIS tier's bridge may return — nothing else is mounted. */
-    bridgeSecret: String = WebViewFlags.BRIDGE_L1,
+    bridgeSecret: String = "",
     premiumSecret: String? = null,
 ) {
     val context = LocalContext.current

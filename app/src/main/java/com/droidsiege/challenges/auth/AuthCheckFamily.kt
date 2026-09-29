@@ -189,13 +189,14 @@ class AuthCheckL4Challenge : TieredChallenge(
     slug = "authcheck",
     level = Difficulty.INSANE,
     title = "Obfuscated Authz Chain",
-    brief = "The admin gate XORs a client-side role with the session token — layered " +
-        "client logic, one forge away. Chain the session forge with the role flip.",
+    brief = "The admin gate demands two client-side artifacts at once: a forged admin " +
+        "session claim AND a locally flipped role flag. Chain the session forge with " +
+        "the role flip.",
     owaspRefs = listOf("M3", "MASVS-AUTH-2", "MASTG-TEST-0x52"),
     hints = listOf(
         "Chain: forge an HS256 token (L3 key), then the gate XORs the token with the " +
             "client role flag.",
-        "The gate's XOR key is the literal 's1ege'. forge+flip unlocks it.",
+        "The gate opens only when BOTH client artifacts agree — claim and flag.",
         "Secure builds: server entitlements end the chain before it starts.",
     ),
     flag = AuthFlags.CHECK_L4,
@@ -206,7 +207,7 @@ class AuthCheckL4Challenge : TieredChallenge(
             "The only wall is the server boundary — authorization evaluated there, " +
             "per action, with no client-computable shortcut.",
         mastgRefs = listOf("MASVS-AUTH-2", "MASTG-TEST-0x52"),
-        vulnerableSnippet = "val gate = roleFlag xor token.hashCode() xor 's1ege'.hashCode()",
+        vulnerableSnippet = "val gate = claimedRole == \"admin\" && roleFlag",
         fixSnippet = "// server entitlements per action; no client-computable gate",
         takeaway = "Stacked client checks fall together.",
     ),

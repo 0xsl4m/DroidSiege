@@ -122,15 +122,16 @@ object InjectLab {
         // PLACEHOLDER Phase-5 native; the over-read is simulated with a pooled buffer.
         // the secret sits AFTER the user's record in the pool, so the over-read walks
         // into it when the declared length exceeds the record.
-        val pool = SECRET_POOL + input
+        val pool = input + SECRET_POOL
         val length =
             if (secure) {
-                // hardened: clamp to the caller's own record region
+                // hardened: clamp to the caller's own record region — the secret is
+                // never inside [0, recordLength)
                 input.length
             } else {
-                declaredLength
+                declaredLength.coerceIn(0, pool.length)
             }
-        return pool.substring(0, length.coerceIn(0, pool.length))
+        return pool.substring(0, length)
     }
 }
 

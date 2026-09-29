@@ -208,9 +208,8 @@ class FileAccessL3Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         val context = LocalContext.current
-        // the L4 plant from the provider family writes filesDir/secret_flag.txt
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            com.droidsiege.challenges.components.ProviderFiles.plantSecret(context)
+            plantWebViewSecret(context, SECRET_FILE_L3, WebViewFlags.FILE_L3)
         }
         var output by remember { mutableStateOf("") }
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
@@ -293,7 +292,7 @@ class FileAccessL4Challenge : TieredChallenge(
                                 view?.evaluateJavascript(
                                     "var x = new XMLHttpRequest(); " +
                                         "x.open('GET', " +
-                                        "'file:///data/data/com.droidsiege/files/wv_secret.txt', false); " +
+                                        "'file:///data/data/com.droidsiege/files/wv_escrow.txt', false); " +
                                         "x.send(null); " +
                                         "SiegeBridge.reportResult(x.responseText); ''",
                                     null,
