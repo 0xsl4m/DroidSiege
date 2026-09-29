@@ -141,7 +141,7 @@ object PendingIntentVault {
             )
         issued = pi
         return "PendingIntent issued: mutable=${!secure}, baseComponent=" +
-            (if (secure) "FlagVaultActivity" else "<none>")
+            (if (secure) "OfferLinkActivity" else "<none>")
     }
 
     fun hijack(
