@@ -126,7 +126,10 @@ object WeakKdf {
 object KeystoreVault {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
 
-    /** Returns the hardware-backed key itself — its bytes never leave the TEE. */
+    /**
+     * Returns the hardware-backed key itself — its bytes never leave the TEE. The
+     * Keystore generates and manages the GCM nonce; use [SealedBox] to seal/unseal.
+     */
     fun loadOrCreateKey(alias: String): javax.crypto.SecretKey {
         val keyStore = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         keyStore.getKey(alias, null)?.let { return it as javax.crypto.SecretKey }
@@ -140,11 +143,37 @@ object KeystoreVault {
                 .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(256)
-                // the hardened paths always supply a fresh SecureRandom IV per save,
-                // so caller-managed nonces are declared here
-                .setRandomizedEncryptionRequired(false)
                 .build(),
         )
         return generator.generateKey()
+    }
+}
+
+/**
+ * The canonical hardened seal: the (Keystore) key generates its own random nonce, and
+ * the returned blob is `iv ++ ciphertext(++ tag)`. This is the pattern every
+ * secureMode path should teach — never a caller-managed IV.
+ */
+object SealedBox {
+    fun seal(
+        key: java.security.Key,
+        plaintext: ByteArray,
+    ): ByteArray =
+        Cipher.getInstance("AES/GCM/NoPadding").run {
+            init(Cipher.ENCRYPT_MODE, key)
+            iv + doFinal(plaintext)
+        }
+
+    fun unseal(
+        key: java.security.Key,
+        sealed: ByteArray,
+    ): ByteArray {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            key,
+            javax.crypto.spec.GCMParameterSpec(128, sealed.copyOf(12)),
+        )
+        return cipher.doFinal(sealed.copyOfRange(12, sealed.size))
     }
 }

@@ -9,6 +9,7 @@ import com.droidsiege.challenges.common.ActionChallengeScreen
 import com.droidsiege.challenges.common.KeystoreVault
 import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
@@ -81,7 +82,7 @@ object BackupVault {
         context: Context,
         secureMode: Boolean,
     ): String {
-        val dao = VaultDatabases.secureStore(context).records()
+        val dao = VaultDatabases.backupVault(context).records()
         val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val payload =
             if (!secureMode) {
@@ -121,17 +122,19 @@ object BackupVault {
         context: Context,
         secureMode: Boolean,
     ): String {
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val iv: ByteArray
         val payload: ByteArray
         if (!secureMode) {
             // "recovery key" derived from data the app itself keeps in prefs
             val recoveryKey = MessageDigest.getInstance("MD5")
                 .digest("backup-recovery::${androidId(context)}".toByteArray())
+            iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
             payload = RawAes.gcmEncrypt(SecretKeySpec(recoveryKey, "AES"), iv, FLAG_L4.toByteArray())
             prefs(context).edit().putString("device_identity", androidId(context)).commit()
         } else {
-            val key = KeystoreVault.loadOrCreateKey("backup_l4")
-            payload = RawAes.gcmEncrypt(key, iv, FLAG_L4.toByteArray())
+            val sealed = SealedBox.seal(KeystoreVault.loadOrCreateKey("backup_l4"), FLAG_L4.toByteArray())
+            iv = sealed.copyOf(12)
+            payload = sealed.copyOfRange(12, sealed.size)
             prefs(context).edit().remove("device_identity").commit()
         }
         val bundle = File(context.filesDir, "backup_bundle.bin")
@@ -241,7 +244,7 @@ class BackupL3Challenge : TieredChallenge(
     hints = listOf(
         "Read res/xml/backup_rules.xml — what do the rules actually include?",
         "The rules sweep every database into the cloud backup set, secure_store.db included.",
-        "The record is AES-GCM sealed — but the passphrase is the device-derived one from Sealed Recovery.",
+        "The record is AES-GCM sealed — the passphrase is SHA-256(\"siege-cloud::\" + android_id)[..16].",
     ),
     flag = FLAG_L3,
     learn = LearnContent(

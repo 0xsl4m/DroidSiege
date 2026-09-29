@@ -6,6 +6,7 @@ import com.droidsiege.BuildConfig
 import com.droidsiege.challenges.common.ConsoleChallengeScreen
 import com.droidsiege.challenges.common.KeystoreVault
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
@@ -22,42 +23,64 @@ private fun randomIv() = ByteArray(12).also { SecureRandom().nextBytes(it) }
 
 private fun b64(bytes: ByteArray) = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
-/** L4's "bridge": key material assembled like obfuscated native code would. */
-private object LicenseKeyBridge {
+/**
+ * PLACEHOLDER Phase-5 native; L4 path = runtime hook, not static. The obfuscated
+ * constants are a dead end by design: half the material is per-install and only
+ * exists wrapped by a non-exportable Keystore key. The full key is assembled in
+ * memory when the license path runs — dump it with the Frida SecretKeySpec hook
+ * (docs/solutions/crypto/hardcoded/tools/hook-secretkeyspec.js). The real `.so`
+ * replaces this stand-in in Phase 5.
+ */
+internal object LicenseKeyBridge {
     private val a = intArrayOf(0x4c, 0x69, 0x63) // 'Lic'
     private const val SCRAMBLED = "3N\$E" // deliberately scrambled constant
 
-    fun materialize(): ByteArray {
+    private fun installHalf(context: Context): ByteArray {
+        val prefs = context.getSharedPreferences("license_bridge_prefs", Context.MODE_PRIVATE)
+        val wrapKey = KeystoreVault.loadOrCreateKey("license_wrap")
+        prefs.getString("install_half", null)?.let {
+            return SealedBox.unseal(
+                wrapKey,
+                android.util.Base64.decode(it, android.util.Base64.NO_WRAP),
+            )
+        }
+        val fresh = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        prefs.edit()
+            .putString(
+                "install_half",
+                android.util.Base64.encodeToString(SealedBox.seal(wrapKey, fresh), android.util.Base64.NO_WRAP),
+            )
+            .commit()
+        return fresh
+    }
+
+    fun materialize(context: Context): ByteArray {
         val sb = StringBuilder()
         a.forEach { sb.appendCodePoint(it) }
         sb.append(SCRAMBLED.reversed().lowercase())
         sb.append("nse-vault")
+        installHalf(context).forEach { sb.append("%02x".format(it)) }
         return MessageDigest.getInstance("SHA-256").digest(sb.toString().toByteArray())
     }
 }
 
 object HardcodedKeyVault {
-    private fun licenseCiphertext(secureMode: Boolean): Pair<ByteArray, ByteArray> {
-        val iv = randomIv()
-        val payload =
-            if (!secureMode) {
-                val key = SecretKeySpec("droidsiege-static".toByteArray().copyOf(16), "AES")
-                RawAes.gcmEncrypt(key, iv, FLAG_L1.toByteArray())
-            } else {
-                val key = KeystoreVault.loadOrCreateKey("license_l1")
-                RawAes.gcmEncrypt(key, iv, FLAG_L1.toByteArray())
-            }
-        return iv to payload
-    }
+    private fun licenseBlob(secureMode: Boolean): ByteArray =
+        if (!secureMode) {
+            val iv = randomIv()
+            val key = SecretKeySpec("droidsiege-static".toByteArray().copyOf(16), "AES")
+            iv + RawAes.gcmEncrypt(key, iv, FLAG_L1.toByteArray())
+        } else {
+            SealedBox.seal(KeystoreVault.loadOrCreateKey("license_l1"), FLAG_L1.toByteArray())
+        }
 
     fun licenseLines(secureMode: Boolean): List<Pair<String, String>> {
-        val (iv, payload) = licenseCiphertext(secureMode)
         return listOf(
             "License blob (base64, iv||ct)" to
-                b64(iv + payload),
+                b64(licenseBlob(secureMode)),
             "Key location" to
                 if (!secureMode) {
-                    "com.droidsiege.challenges.crypto.LicenseVault.L1_KEY"
+                    "HardcodedKeyVault — hardcoded 16-byte constant in this file"
                 } else {
                     "AndroidKeyStore alias license_l1 (non-exportable)"
                 },
@@ -65,19 +88,18 @@ object HardcodedKeyVault {
     }
 
     fun splitKeyLines(secureMode: Boolean): List<Pair<String, String>> {
-        val iv = randomIv()
-        val payload =
+        val blob =
             if (!secureMode) {
+                val iv = randomIv()
                 val key = RawAes.keyFrom(
-                    sha256((BuildConfig.WALLET_KEY_PART_A + "install-seed-2026").toByteArray()).copyOf(16),
+                    sha256((BuildConfig.WALLET_KEY_PART_A + "install_seed_2026").toByteArray()).copyOf(16),
                 )
-                RawAes.gcmEncrypt(key, iv, FLAG_L2.toByteArray())
+                iv + RawAes.gcmEncrypt(key, iv, FLAG_L2.toByteArray())
             } else {
-                val key = KeystoreVault.loadOrCreateKey("license_l2")
-                RawAes.gcmEncrypt(key, iv, FLAG_L2.toByteArray())
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("license_l2"), FLAG_L2.toByteArray())
             }
         return listOf(
-            "Install license (base64, iv||ct)" to b64(iv + payload),
+            "Install license (base64, iv||ct)" to b64(blob),
             "Part A" to "BuildConfig.WALLET_KEY_PART_A (gradle, see app/build.gradle.kts)",
             "Part B" to "strings.xml: install_seed_2026",
             "Derivation" to "AES key = SHA-256(partA + partB)[..16]",
@@ -88,16 +110,17 @@ object HardcodedKeyVault {
         context: Context,
         secureMode: Boolean,
     ): List<Pair<String, String>> {
-        val iv = randomIv()
-        val payload =
+        val blob =
             if (!secureMode) {
-                RawAes.gcmEncrypt(SecretKeySpec(runtimeKey(context), "AES"), iv, FLAG_L3.toByteArray())
+                val iv = randomIv()
+                RawAes
+                    .gcmEncrypt(SecretKeySpec(runtimeKey(context), "AES"), iv, FLAG_L3.toByteArray())
+                    .let { iv + it }
             } else {
-                val key = KeystoreVault.loadOrCreateKey("license_l3")
-                RawAes.gcmEncrypt(key, iv, FLAG_L3.toByteArray())
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("license_l3"), FLAG_L3.toByteArray())
             }
         return listOf(
-            "Enterprise license (base64, iv||ct)" to b64(iv + payload),
+            "Enterprise license (base64, iv||ct)" to b64(blob),
             "Derivation" to "SHA-256(res_partner_tag + sha256Hex(apk signing cert))",
             "res_partner_tag" to context.getString(com.droidsiege.R.string.partner_key_tag),
         )
@@ -117,18 +140,26 @@ object HardcodedKeyVault {
             .digest((tag + certHash).toByteArray())
     }
 
-    fun bridgeLines(secureMode: Boolean): List<Pair<String, String>> {
-        val iv = randomIv()
-        val payload =
+    fun bridgeLines(
+        context: Context,
+        secureMode: Boolean,
+    ): List<Pair<String, String>> {
+        val blob =
             if (!secureMode) {
-                RawAes.gcmEncrypt(SecretKeySpec(LicenseKeyBridge.materialize(), "AES"), iv, FLAG_L4.toByteArray())
+                val iv = randomIv()
+                RawAes
+                    .gcmEncrypt(
+                        SecretKeySpec(LicenseKeyBridge.materialize(context), "AES"),
+                        iv,
+                        FLAG_L4.toByteArray(),
+                    )
+                    .let { iv + it }
             } else {
-                val key = KeystoreVault.loadOrCreateKey("license_l4")
-                RawAes.gcmEncrypt(key, iv, FLAG_L4.toByteArray())
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("license_l4"), FLAG_L4.toByteArray())
             }
         return listOf(
-            "Legacy license (base64, iv||ct)" to b64(iv + payload),
-            "Key location" to "LicenseKeyBridge.materialize() — assembled at runtime",
+            "Legacy license (base64, iv||ct)" to b64(blob),
+            "Key location" to "LicenseKeyBridge.materialize(context) — half is per-install, Keystore-wrapped",
         )
     }
 }
@@ -144,7 +175,7 @@ class HardcodedL1Challenge : TieredChallenge(
         "to decrypt it — so can you.",
     owaspRefs = listOf("M10", "MASVS-CRYPTO-1", "MASTG-TEST-0x24"),
     hints = listOf(
-        "The AES key is a hardcoded 16-byte string in the source — decompile and read.",
+        "The AES key is a hardcoded 16-byte string in HardcodedKeyVault — decompile and read.",
         "jadx: look for LicenseVault.L1_KEY, then decrypt the blob with any AES-GCM tool.",
         "The blob is base64(iv||ciphertext) — 12-byte nonce first.",
     ),
@@ -251,8 +282,8 @@ class HardcodedL4Challenge : TieredChallenge(
         "never exists as a literal. The ciphertext is in front of you.",
     owaspRefs = listOf("M10", "MASVS-CRYPTO-1", "M7", "MASTG-TEST-0x24"),
     hints = listOf(
-        "Static reading of LicenseKeyBridge gives you the assembly recipe.",
-        "Faster: hook SecretKeySpec.<init> with Frida and read every key as it is constructed.",
+        "Static reading gives half the recipe — the other half is per-install and Keystore-wrapped.",
+        "Run the license path under the Frida SecretKeySpec.<init> hook and read the assembled key.",
         "docs/solutions/crypto/hardcoded/tools/hook-secretkeyspec.js does exactly that.",
     ),
     flag = FLAG_L4,
@@ -263,8 +294,9 @@ class HardcodedL4Challenge : TieredChallenge(
             "Obfuscation protects against nothing more than grep; keys belong in " +
             "hardware-backed storage that never yields bytes.",
         mastgRefs = listOf("MASVS-CRYPTO-1", "MASVS-RESILIENCE-2", "MASTG-TEST-0x24"),
-        vulnerableSnippet = "// 'Lic' + reversed scrambled part + suffix, hashed:\n" +
-            "fun materialize() = sha256(\"Lic\" + \"esn3\".lowercase() + \"nse-vault\")",
+        vulnerableSnippet = "// static half + per-install half (Keystore-wrapped):\n" +
+            "fun materialize(ctx: Context) =\n" +
+            "    sha256(staticHalf() + installHalf(ctx)) // in memory only while sealing",
         fixSnippet = "// hardware-backed keys are used, never observed:\n" +
             "val key = keystoreKey(\"license_legacy\")",
         takeaway = "Obfuscation reshuffles the reading order for the attacker's benefit.",
@@ -272,6 +304,10 @@ class HardcodedL4Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
-        ConsoleChallengeScreen(secureMode = secureMode, lines = HardcodedKeyVault.bridgeLines(secureMode))
+        val context = androidx.compose.ui.platform.LocalContext.current
+        ConsoleChallengeScreen(
+            secureMode = secureMode,
+            lines = HardcodedKeyVault.bridgeLines(context, secureMode),
+        )
     }
 }

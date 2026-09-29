@@ -79,7 +79,7 @@ object HomegrownVault {
         if (!secureMode) {
             // seed = minutes since epoch, truncated to the hour — a "sortable session id"
             val prng = Random(issuedAtMinutes / 60)
-            prng.nextBytes(keystream)
+            prng.fillKeystream(keystream)
         } else {
             java.security.SecureRandom().nextBytes(keystream)
         }
@@ -88,7 +88,7 @@ object HomegrownVault {
     }
 }
 
-private fun Random.nextBytes(bytes: ByteArray) {
+private fun Random.fillKeystream(bytes: ByteArray) {
     var i = 0
     while (i < bytes.size) {
         val value = nextInt()
@@ -110,7 +110,7 @@ class HomegrownL1Challenge : TieredChallenge(
     hints = listOf(
         "256 keys is not key space, it is a short list.",
         "Brute every byte 0x00–0xFF; the correct one yields printable text starting with 'recovery:'.",
-        "docs/solutions/crypto/homegrown/tools/brute_xor.py does it in milliseconds.",
+        "docs/solutions/crypto/homegrown/tools/break_them.py xor-single cracks it in milliseconds.",
     ),
     flag = FLAG_L1,
     learn = LearnContent(
@@ -145,7 +145,7 @@ class HomegrownL2Challenge : TieredChallenge(
     owaspRefs = listOf("M10", "MASVS-CRYPTO-1", "MASTG-TEST-0x26"),
     hints = listOf(
         "Repeating-key XOR with known plaintext: the note starts with 'vault note: ' and the flag starts with 'DS{'.",
-        "Six known plaintext bytes against a 5-byte key crack most of it; the rest falls to printability.",
+        "break_them.py xor-repeating reconstructs the key from the prefix; the rest falls to printability.",
         "tools/known_plaintext_xor.py reconstructs the key from the prefix alone.",
     ),
     flag = FLAG_L2,
@@ -183,7 +183,7 @@ class HomegrownL3Challenge : TieredChallenge(
     hints = listOf(
         "Decompile ProprietaryVault — the transform and its parameters are fully visible.",
         "It is position-dependent: byte i uses round i % 4; each round is rotl(3), xor mask, add bias.",
-        "Invert the operations right-to-left, or run tools/invert_proprietary.py.",
+        "Invert the operations right-to-left, or run break_them.py proprietary.",
     ),
     flag = FLAG_L3,
     learn = LearnContent(
@@ -225,7 +225,7 @@ class HomegrownL4Challenge : TieredChallenge(
     hints = listOf(
         "java.util.Random is a 48-bit LCG — with a known seed the entire stream is deterministic.",
         "The seed is issuedAtMinutes / 60. Brute the hours around the shown issue time.",
-        "tools/predict_stream.py tries every hour in a window and matches on the 'session: ' prefix.",
+        "break_them.py stream <issued-minutes> <ct-hex> tries every hour and matches the 'session: ' prefix.",
     ),
     flag = FLAG_L4,
     learn = LearnContent(

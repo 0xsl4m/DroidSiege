@@ -9,6 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -104,7 +105,15 @@ class ScreensL1Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         val activity = LocalContext.current as Activity
-        LaunchedEffect(secureMode) { setSecureFlag(activity, secureMode) }
+        DisposableEffect(secureMode) {
+            val wasSecure =
+                (activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
+            setSecureFlag(activity, secureMode)
+            onDispose {
+                // restore whatever the window had before this screen — no state bleed
+                setSecureFlag(activity, wasSecure)
+            }
+        }
         Column {
             Text(
                 text = "Recovery secret (this session):",
@@ -283,7 +292,14 @@ class ScreensL4Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         val activity = LocalContext.current as Activity
         var previewing by remember { mutableStateOf(false) }
-        LaunchedEffect(secureMode) { setSecureFlag(activity, true) }
+        DisposableEffect(Unit) {
+            val wasSecure =
+                (activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
+            setSecureFlag(activity, true)
+            onDispose {
+                setSecureFlag(activity, wasSecure)
+            }
+        }
         LaunchedEffect(previewing) {
             if (previewing && !secureMode) {
                 setSecureFlag(activity, false)
@@ -294,7 +310,7 @@ class ScreensL4Challenge : TieredChallenge(
         }
         Column(verticalArrangement = ChallengeSpacing) {
             Text(
-                text = if (previewing || secureMode) FLAG_L4 else "🔒 flag secure window",
+                text = if (previewing && !secureMode) FLAG_L4 else "🔒 flag secure window",
                 style = MaterialTheme.typography.titleLarge,
                 fontFamily = FontFamily.Monospace,
             )

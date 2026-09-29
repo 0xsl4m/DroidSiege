@@ -33,6 +33,18 @@ class JavaRandom:
         v = self.next(32)
         return v - (1 << 32) if v >= (1 << 31) else v
 
+    def next_int_bound(self, bound):
+        # java.util.Random.nextInt(bound): next(31), power-of-two fast path,
+        # otherwise rejection to kill modulo bias.
+        if bound & (-bound) == bound:
+            return (bound * self.next(31)) >> 31
+        while True:
+            bits = self.next(31)
+            val = bits % bound
+            # java re-draws when bits - val + (bound - 1) overflows int
+            if ((bits - val + (bound - 1)) & 0xFFFFFFFF) < 0x80000000:
+                return val
+
 def rotl(x, n):
     return ((x << n) | (x >> (8 - n))) & 0xFF
 
@@ -100,8 +112,7 @@ def token_counter(n):
     print(binascii.hexlify(hashlib.md5(f"siege-session-{n}".encode()).digest()).decode()[:6])
 
 def otp(day):
-    v = JavaRandom(day).next_int() % 1_000_000
-    print(f"{v:06d}")
+    print(f"{JavaRandom(day).next_int_bound(1_000_000):06d}")
 
 if __name__ == "__main__":
     cmd = sys.argv[1]

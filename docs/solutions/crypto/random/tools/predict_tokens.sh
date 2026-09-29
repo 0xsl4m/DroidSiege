@@ -14,7 +14,7 @@ python3 "$HERE/../../homegrown/tools/break_them.py" token-hour "$(($(date +%s) /
 echo
 echo "== L3: counter session id (session number from siege_session_prefs.xml) =="
 adb shell run-as com.droidsiege cat shared_prefs/siege_session_prefs.xml 2>/dev/null || true
-N=$(adb shell run-as com.droidsiege cat shared_prefs/siege_session_prefs.xml 2>/dev/null | grep -o 'session_counter.*[0-9]+' | grep -o '[0-9]\+' | tail -1 || echo 1)
+N=$(adb shell run-as com.droidsiege cat shared_prefs/siege_session_prefs.xml 2>/dev/null | grep -oE 'session_counter[^<]*' | grep -oE '[0-9]+' | tail -1 || echo 1)
 python3 "$HERE/../../homegrown/tools/break_them.py" token-counter "$N"
 
 echo

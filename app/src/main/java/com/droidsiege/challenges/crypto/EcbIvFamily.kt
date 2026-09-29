@@ -1,14 +1,31 @@
 package com.droidsiege.challenges.crypto
 
+import android.content.Context
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import com.droidsiege.R
 import com.droidsiege.challenges.common.ConsoleChallengeScreen
 import com.droidsiege.challenges.common.HexCodec
 import com.droidsiege.challenges.common.KeystoreVault
-import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
+import com.droidsiege.ui.theme.ChallengeSpacing
 import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec
 
@@ -19,6 +36,8 @@ private const val FLAG_L4 = "DS{crypto_ecbiv_L4_82ea6f}"
 
 private const val DEMO_KEY_HEX = "00112233445566778899aabbccddeeff"
 
+private val ORACLE_IV = "0racle-iv-2026!!".toByteArray() // 16 bytes (CBC block)
+
 object EcbIvVault {
     fun ecbLines(secureMode: Boolean): List<Pair<String, String>> {
         val key = SecretKeySpec(HexCodec.fromHex(DEMO_KEY_HEX), "AES")
@@ -28,8 +47,7 @@ object EcbIvVault {
             if (!secureMode) {
                 RawAes.ecbEncrypt(key, plaintext.toByteArray())
             } else {
-                val ks = KeystoreVault.loadOrCreateKey("ecbiv_l1")
-                RawAes.gcmEncrypt(ks, randomNonce(), plaintext.toByteArray())
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("ecbiv_l1"), plaintext.toByteArray())
             }
         return listOf(
             "DEV key (hex)" to DEMO_KEY_HEX,
@@ -39,8 +57,6 @@ object EcbIvVault {
         )
     }
 
-    private fun randomNonce() = ByteArray(12).also { SecureRandom().nextBytes(it) }
-
     fun cbcLines(secureMode: Boolean): List<Pair<String, String>> {
         val key = SecretKeySpec("iv_demo_key_2024".toByteArray(), "AES")
         val iv = "static-iv-static".toByteArray()
@@ -49,8 +65,7 @@ object EcbIvVault {
             if (!secureMode) {
                 RawAes.cbcEncrypt(key, iv, plaintext.toByteArray())
             } else {
-                val ks = KeystoreVault.loadOrCreateKey("ecbiv_l2")
-                RawAes.gcmEncrypt(ks, randomNonce(), plaintext.toByteArray())
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("ecbiv_l2"), plaintext.toByteArray())
             }
         return listOf(
             "Key (ascii)" to "iv_demo_key_2024",
@@ -59,13 +74,38 @@ object EcbIvVault {
         )
     }
 
-    /** L3 — the in-app padding oracle. */
+    /**
+     * L3 — the in-app padding oracle. The validator key is generated per install and
+     * stored only wrapped by a non-exportable Keystore key: direct decryption is
+     * impossible off-device, so the oracle is the only way in.
+     */
+    fun oracleKey(context: Context): SecretKeySpec {
+        val prefs = context.getSharedPreferences("siege_oracle_prefs", Context.MODE_PRIVATE)
+        val wrapKey = KeystoreVault.loadOrCreateKey("ecbiv_l3_wrap")
+        val stored = prefs.getString("wrapped_key", null)
+        if (stored != null) {
+            return SecretKeySpec(
+                SealedBox.unseal(wrapKey, android.util.Base64.decode(stored, android.util.Base64.NO_WRAP)),
+                "AES",
+            )
+        }
+        val fresh = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        prefs.edit()
+            .putString(
+                "wrapped_key",
+                android.util.Base64.encodeToString(SealedBox.seal(wrapKey, fresh), android.util.Base64.NO_WRAP),
+            )
+            .commit()
+        return SecretKeySpec(fresh, "AES")
+    }
+
     fun probeToken(
+        context: Context,
         tokenHex: String,
         secureMode: Boolean,
     ): String {
-        val key = SecretKeySpec("iv_demo_key_2024".toByteArray(), "AES")
-        val iv = "static-iv-static".toByteArray()
+        val key = oracleKey(context)
+        val iv = ORACLE_IV
         return try {
             val pt = RawAes.cbcDecrypt(key, iv, HexCodec.fromHex(tokenHex))
             if (secureMode) {
@@ -74,39 +114,40 @@ object EcbIvVault {
             } else {
                 "token accepted: ${String(pt)}"
             }
+        } catch (boom: javax.crypto.BadPaddingException) {
+            // the padding failure is distinguishable from other failures: an oracle
+            if (secureMode) "token rejected" else "padding error"
         } catch (boom: Exception) {
-            if (secureMode) {
-                "token rejected"
-            } else {
-                // the padding failure is distinguishable from other failures: an oracle
-                if (boom.message?.contains("padding", ignoreCase = true) == true) {
-                    "padding error"
-                } else {
-                    "block size error"
-                }
-            }
+            if (secureMode) "token rejected" else "block size error"
         }
     }
 
-    fun oracleToken(): String {
-        val key = SecretKeySpec("iv_demo_key_2024".toByteArray(), "AES")
-        val iv = "static-iv-static".toByteArray()
+    fun oracleToken(context: Context): String {
+        val key = oracleKey(context)
+        val iv = ORACLE_IV
         return HexCodec.toHex(RawAes.cbcEncrypt(key, iv, "recovery::${FLAG_L3}".toByteArray()))
     }
 
     fun gcmLines(secureMode: Boolean): List<Pair<String, String>> {
-        val key =
-            if (!secureMode) {
-                SecretKeySpec(HexCodec.fromHex(DEMO_KEY_HEX), "AES")
-            } else {
-                KeystoreVault.loadOrCreateKey("ecbiv_l4")
-            }
-        // The vulnerability: the SAME nonce encrypts both messages.
-        val nonce = ByteArray(12).also { if (!secureMode) it.fill(7) else SecureRandom().nextBytes(it) }
         val known = "welcome to siege wallet, dear customer!"
         val secret = if (!secureMode) FLAG_L4 else "[nonce-unique sealed]"
-        val c1 = RawAes.gcmEncrypt(key, nonce, known.toByteArray())
-        val c2 = RawAes.gcmEncrypt(key, nonce, secret.toByteArray())
+        val nonce: ByteArray
+        val c1: ByteArray
+        val c2: ByteArray
+        if (!secureMode) {
+            // The vulnerability: the SAME nonce encrypts both messages.
+            val key = SecretKeySpec(HexCodec.fromHex(DEMO_KEY_HEX), "AES")
+            nonce = ByteArray(12).also { it.fill(7) }
+            c1 = RawAes.gcmEncrypt(key, nonce, known.toByteArray())
+            c2 = RawAes.gcmEncrypt(key, nonce, secret.toByteArray())
+        } else {
+            // Hardened: each message sealed under its own Keystore-generated nonce.
+            val ks = KeystoreVault.loadOrCreateKey("ecbiv_l4")
+            val s1 = SealedBox.seal(ks, known.toByteArray())
+            c1 = s1
+            c2 = SealedBox.seal(ks, secret.toByteArray())
+            nonce = s1.copyOf(12)
+        }
         return listOf(
             "Welcome plaintext (public)" to known,
             "Welcome ciphertext (hex)" to HexCodec.toHex(c1),
@@ -195,7 +236,8 @@ class EcbIvL3Challenge : TieredChallenge(
     hints = listOf(
         "Collect the oracle token (ciphertext of a known recovery token) first.",
         "Modify the last block(s): a padding error vs an accepted/rejected answer tells you the last plaintext byte.",
-        "The console in docs/solutions/crypto/ecbiv/tools/padding_oracle.py drives the attack — 2 bytes per round.",
+        "mode_tools.py oracle (docs/solutions/crypto/ecbiv/tools) implements the attack —",
+        "2 bytes per round, relayed through this console.",
     ),
     flag = FLAG_L3,
     learn = LearnContent(
@@ -215,16 +257,38 @@ class EcbIvL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
-        ConsoleChallengeScreen(
-            secureMode = secureMode,
-            note = "Submit modified ciphertext hex to the validator and study the answers.",
-            lines = listOf("Oracle token (hex)" to EcbIvVault.oracleToken()),
-            probes = listOf(
-                KitAction("Validate oracle token (sanity)") { _, secure ->
-                    EcbIvVault.probeToken(EcbIvVault.oracleToken(), secure)
-                },
-            ),
-        )
+        val context = LocalContext.current
+        var crafted by rememberSaveable { mutableStateOf("") }
+        var answer by rememberSaveable { mutableStateOf("") }
+        Column(verticalArrangement = ChallengeSpacing) {
+            ConsoleChallengeScreen(
+                secureMode = secureMode,
+                note = "Craft ciphertext hex, submit it to the validator, and study the answers.",
+                lines = listOf("Oracle token (hex)" to EcbIvVault.oracleToken(context)),
+            )
+            OutlinedTextField(
+                value = crafted,
+                onValueChange = { crafted = it },
+                label = { Text(stringResource(R.string.oracle_crafted_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = { answer = EcbIvVault.probeToken(context, crafted, secureMode) },
+                enabled = crafted.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.oracle_submit))
+            }
+            if (answer.isNotEmpty()) {
+                Text(
+                    text = answer,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 

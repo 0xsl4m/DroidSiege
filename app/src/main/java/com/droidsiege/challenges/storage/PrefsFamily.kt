@@ -6,6 +6,7 @@ import com.droidsiege.challenges.common.ActionChallengeScreen
 import com.droidsiege.challenges.common.KeystoreVault
 import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
@@ -29,7 +30,7 @@ internal object PrefsVault {
     private fun pseudoEncrypt(value: String): String =
         android.util.Base64.encodeToString(value.toByteArray(), android.util.Base64.NO_WRAP)
 
-    // L3: the "key material" lives in strings.xml, as it does in plenty of shipped apps.
+    // L3: the "key material" ships as a plain Kotlin constant, as it does in plenty of shipped apps.
     private fun derivedKey(): ByteArray {
         val secret = "droidsiege_pref_secret_2024"
         val digest = java.security.MessageDigest.getInstance("SHA-256")
@@ -60,12 +61,20 @@ internal object PrefsVault {
             prefs(context).edit().putString("encrypted_flag", pseudoEncrypt(FLAG_L2)).commit()
             "Encrypted session saved."
         } else {
-            val key = KeystoreVault.loadOrCreateKey("prefs_l2")
-            val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-            val ct = RawAes.gcmEncrypt(key, iv, FLAG_L2.toByteArray())
+            val sealed =
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("prefs_l2"), FLAG_L2.toByteArray())
             prefs(context).edit()
-                .putString("encrypted_flag_iv", android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP))
-                .putString("encrypted_flag", android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP))
+                .putString(
+                    "encrypted_flag_iv",
+                    android.util.Base64.encodeToString(sealed.copyOf(12), android.util.Base64.NO_WRAP),
+                )
+                .putString(
+                    "encrypted_flag",
+                    android.util.Base64.encodeToString(
+                        sealed.copyOfRange(12, sealed.size),
+                        android.util.Base64.NO_WRAP,
+                    ),
+                )
                 .commit()
             "Session sealed with a Keystore key."
         }
@@ -84,12 +93,20 @@ internal object PrefsVault {
                 .commit()
             "Encrypted session saved with the release key."
         } else {
-            val key = KeystoreVault.loadOrCreateKey("prefs_l3")
-            val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-            val ct = RawAes.gcmEncrypt(key, iv, FLAG_L3.toByteArray())
+            val sealed =
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("prefs_l3"), FLAG_L3.toByteArray())
             prefs(context).edit()
-                .putString("derived_iv", android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP))
-                .putString("derived_flag", android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP))
+                .putString(
+                    "derived_iv",
+                    android.util.Base64.encodeToString(sealed.copyOf(12), android.util.Base64.NO_WRAP),
+                )
+                .putString(
+                    "derived_flag",
+                    android.util.Base64.encodeToString(
+                        sealed.copyOfRange(12, sealed.size),
+                        android.util.Base64.NO_WRAP,
+                    ),
+                )
                 .commit()
             "Session sealed with a non-exportable Keystore key."
         }
@@ -116,12 +133,20 @@ internal object PrefsVault {
                 .commit()
             "Vault secured with EncryptedSharedPreferences. Support cache refreshed."
         } else {
-            val key = KeystoreVault.loadOrCreateKey("prefs_l4_master")
-            val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-            val ct = RawAes.gcmEncrypt(key, iv, FLAG_L4.toByteArray())
+            val sealed =
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("prefs_l4_master"), FLAG_L4.toByteArray())
             prefs(context).edit()
-                .putString("master_iv", android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP))
-                .putString("vault_flag", android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP))
+                .putString(
+                    "master_iv",
+                    android.util.Base64.encodeToString(sealed.copyOf(12), android.util.Base64.NO_WRAP),
+                )
+                .putString(
+                    "vault_flag",
+                    android.util.Base64.encodeToString(
+                        sealed.copyOfRange(12, sealed.size),
+                        android.util.Base64.NO_WRAP,
+                    ),
+                )
                 .remove("support_cache")
                 .commit()
             "Vault sealed with StrongBox-class key. No support cache kept."
@@ -232,7 +257,8 @@ class PrefsL3Challenge : TieredChallenge(
     hints = listOf(
         "The ciphertext alone is not enough — you need the key material.",
         "The app ships all of its key material inside the APK. Where do apps keep constants?",
-        "strings.xml holds the seed. SHA-256 of it, truncated to 16 bytes, is the AES key.",
+        "The seed ships as a plain constant in PrefsVault — jadx prints it.",
+        "SHA-256 of it, cut to 16 bytes, is the AES key.",
     ),
     flag = FLAG_L3,
     learn = LearnContent(

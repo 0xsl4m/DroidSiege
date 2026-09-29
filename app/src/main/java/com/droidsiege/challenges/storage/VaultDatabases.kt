@@ -98,4 +98,7 @@ object VaultDatabases {
 
     fun warpVault(context: Context): SealedStoreDatabase =
         Room.databaseBuilder(context, SealedStoreDatabase::class.java, "warp_vault.db").build()
+
+    fun backupVault(context: Context): SealedStoreDatabase =
+        Room.databaseBuilder(context, SealedStoreDatabase::class.java, "backup_vault.db").build()
 }

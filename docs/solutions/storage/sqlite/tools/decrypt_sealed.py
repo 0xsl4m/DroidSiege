@@ -37,11 +37,15 @@ def main(tmpdir):
     except Exception as e:
         print("L3: seed + pull first (%s)" % e)
 
-    key4 = hashlib.sha256(b"warp-" + b"6202-yek"[::-1]).digest()[:16]
-    try:
-        print("L4 flag:", open_record(f"{tmpdir}/warp_vault.db", "warp-core", key4).decode())
-    except Exception as e:
-        print("L4: seed + pull first (%s)" % e)
+    if "--warp-key" in sys.argv:
+        key4 = bytes.fromhex(sys.argv[sys.argv.index("--warp-key") + 1])
+        try:
+            print("L4 flag:", open_record(f"{tmpdir}/warp_vault.db", "warp-core", key4).decode())
+        except Exception as e:
+            print("L4: seed + pull first (%s)" % e)
+    else:
+        print("L4: half the bridge material is Keystore-wrapped — dump the assembled key")
+        print("     with hook-secretkeyspec.js while the gate opens, then --warp-key <hex>")
 
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else ".")

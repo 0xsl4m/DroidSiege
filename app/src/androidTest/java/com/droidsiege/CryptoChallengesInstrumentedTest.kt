@@ -43,6 +43,32 @@ class CryptoChallengesInstrumentedTest {
     }
 
     @Test
+    fun oracleKeyIsPerInstallAndBehavesPerMode() {
+        val context = androidx.test.platform.app.InstrumentationRegistry
+            .getInstrumentation()
+            .targetContext
+        val token = com.droidsiege.challenges.crypto.EcbIvVault.oracleToken(context)
+
+        // sanity: the oracle accepts its own token in the insecure mode
+        val accepted = com.droidsiege.challenges.crypto.EcbIvVault
+            .probeToken(context, token, secureMode = false)
+        assertThat(accepted).contains("token accepted")
+
+        // the intended attack: a last byte of 0x00 always yields the padding error
+        val bytes = com.droidsiege.challenges.common.HexCodec.fromHex(token)
+        bytes[bytes.size - 1] = 0x00
+        val tampered = com.droidsiege.challenges.common.HexCodec.toHex(bytes)
+        val answered = com.droidsiege.challenges.crypto.EcbIvVault
+            .probeToken(context, tampered, secureMode = false)
+        assertThat(answered).isEqualTo("padding error")
+
+        // hardened: the validator answers identically for every input
+        val hardened = com.droidsiege.challenges.crypto.EcbIvVault
+            .probeToken(context, token, secureMode = true)
+        assertThat(hardened).isEqualTo("token rejected")
+    }
+
+    @Test
     fun nonceReuseRecoversTheRecoveryMessageVulnerably() {
         val lines = EcbIvVault.gcmLines(secureMode = false).toMap()
         val known = lines.getValue("Welcome plaintext (public)")

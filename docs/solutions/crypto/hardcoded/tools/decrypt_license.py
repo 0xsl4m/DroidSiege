@@ -4,7 +4,8 @@
 L1: key = "droidsiege-static"[..16]                     (jadx constant)
 L2: key = SHA-256(BuildConfig.WALLET_KEY_PART_A + "install_seed_2026")[..16]
 L3: key = SHA-256(partner_tag + sha256hex(signing cert))  (apksigner --print-certs)
-L4: key = SHA-256("Lic" + reversed("3N$E").lower() + "nse-vault")   (LicenseKeyBridge)
+L4: half the bridge material is per-install and Keystore-wrapped — dump the
+    assembled key with hook-secretkeyspec.js and paste it at the prompt.
 All blobs: base64(iv[12] || AES-GCM ciphertext).
 """
 import base64
@@ -42,8 +43,8 @@ def main():
         key3 = hashlib.sha256((tag + cert_hex).encode()).digest()
         print("L3:", gcm_open(key3, blob))
 
-    key4 = hashlib.sha256(b"Lic" + "3N$E"[::-1].lower().encode() + b"nse-vault").digest()
-    print("L4:", gcm_open(key4, blob))
+    key4_hex = input("L4 dumped key (hex, from the Frida hook): ").strip()
+    print("L4:", gcm_open(bytes.fromhex(key4_hex), blob))
 
 if __name__ == "__main__":
     main()

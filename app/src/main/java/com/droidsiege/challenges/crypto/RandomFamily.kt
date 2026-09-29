@@ -2,6 +2,11 @@ package com.droidsiege.challenges.crypto
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.droidsiege.challenges.common.GateChallengeScreen
 import com.droidsiege.challenges.common.HexCodec
 import com.droidsiege.challenges.common.TieredChallenge
@@ -98,7 +103,7 @@ class RandomL2Challenge : TieredChallenge(
     hints = listOf(
         "seed = epoch hours; the status line shows the current minute count.",
         "Brute the 24 seeds of the current day (or a small window around it).",
-        "tools/brute_hour_token.py finds the seed whose output matches the token format.",
+        "predict_tokens.sh (or break_them.py token-hour) brute the hour seeds.",
     ),
     flag = FLAG_L2,
     learn = LearnContent(
@@ -160,9 +165,13 @@ class RandomL3Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         val context = androidx.compose.ui.platform.LocalContext.current
-        val prefs = context.getSharedPreferences("siege_session_prefs", Context.MODE_PRIVATE)
-        val counter = prefs.getInt("session_counter", 0) + 1
-        prefs.edit().putInt("session_counter", counter).apply()
+        var counter by remember { mutableStateOf(0) }
+        LaunchedEffect(Unit) {
+            val prefs = context.getSharedPreferences("siege_session_prefs", Context.MODE_PRIVATE)
+            val next = prefs.getInt("session_counter", 0) + 1
+            prefs.edit().putInt("session_counter", next).apply()
+            counter = next
+        }
         GateChallengeScreen(
             secureMode = secureMode,
             note = "Your session number: $counter (id = md5(\"siege-session-<n>\")[:6]).",
@@ -188,7 +197,7 @@ class RandomL4Challenge : TieredChallenge(
     hints = listOf(
         "Daily rotation does not add entropy — the OTP is Random(dayOfMonth).",
         "At most 31 candidates; today's day-of-month narrows it to one.",
-        "tools/predict_daily_otp.py computes it from the date.",
+        "predict_tokens.sh (break_them.py otp) computes it from the day-of-month.",
     ),
     flag = FLAG_L4,
     learn = LearnContent(

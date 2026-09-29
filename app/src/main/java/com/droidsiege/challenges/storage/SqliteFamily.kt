@@ -7,6 +7,7 @@ import com.droidsiege.challenges.common.ActionChallengeScreen
 import com.droidsiege.challenges.common.KeystoreVault
 import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
@@ -34,19 +35,45 @@ private fun l3Key(context: Context): SecretKeySpec {
 }
 
 /**
- * L4 keeps the record sealed until the runtime gate opens, and the key material is
- * never a plain string — it is assembled the way obfuscated native code would.
+ * PLACEHOLDER Phase-5 native; L4 path = runtime hook, not static. The obfuscated
+ * constants alone are a dead end by design: half of the key material is per-install
+ * and only ever exists wrapped by a non-exportable Keystore key. The final key is
+ * assembled in memory when the gate opens — the intended solve is a Frida hook on
+ * SecretKeySpec/Cipher at that moment, and the real `.so` replaces this in Phase 5.
  */
-private object WarpKeyBridge {
+internal object WarpKeyBridge {
     // What a lightweight obfuscator produces from a native constant.
     private val p1 = intArrayOf(0x77, 0x61, 0x72, 0x70) // 'warp'
     private const val P2 = "k3y-2026"
 
-    fun materialize(): ByteArray {
+    private fun installHalf(context: Context): ByteArray {
+        val prefs = context.getSharedPreferences("warp_bridge_prefs", Context.MODE_PRIVATE)
+        val wrapKey = com.droidsiege.challenges.common.KeystoreVault.loadOrCreateKey("warp_wrap")
+        prefs.getString("install_half", null)?.let {
+            return com.droidsiege.challenges.common.SealedBox.unseal(
+                wrapKey,
+                android.util.Base64.decode(it, android.util.Base64.NO_WRAP),
+            )
+        }
+        val fresh = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        prefs.edit()
+            .putString(
+                "install_half",
+                android.util.Base64.encodeToString(
+                    com.droidsiege.challenges.common.SealedBox.seal(wrapKey, fresh),
+                    android.util.Base64.NO_WRAP,
+                ),
+            )
+            .commit()
+        return fresh
+    }
+
+    fun materialize(context: Context): ByteArray {
         val sb = StringBuilder()
         p1.forEach { sb.appendCodePoint(it) }
         sb.append('-')
         sb.append(P2.reversed())
+        installHalf(context).forEach { sb.append("%02x".format(it)) }
         return MessageDigest.getInstance("SHA-256").digest(sb.toString().toByteArray()).copyOf(16)
     }
 }
@@ -95,17 +122,18 @@ object SqliteSeeder {
         secureMode: Boolean,
     ): String {
         val dao = VaultDatabases.secureStore(context).records()
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val payload =
+        val sealed =
             if (!secureMode) {
-                RawAes.gcmEncrypt(l3Key(context), iv, FLAG_L3.toByteArray())
+                val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                RawAes.gcmEncrypt(l3Key(context), iv, FLAG_L3.toByteArray()).let { iv to it }
             } else {
-                val key = KeystoreVault.loadOrCreateKey("sqlite_l3")
-                RawAes.gcmEncrypt(key, iv, FLAG_L3.toByteArray())
+                SealedBox
+                    .seal(KeystoreVault.loadOrCreateKey("sqlite_l3"), FLAG_L3.toByteArray())
+                    .let { it.copyOf(12) to it.copyOfRange(12, it.size) }
             }
         runBlocking {
             dao.clear()
-            dao.insert(SealedRecord(recordId = "recovery", payload = payload, nonce = iv))
+            dao.insert(SealedRecord(recordId = "recovery", payload = sealed.second, nonce = sealed.first))
         }
         return if (!secureMode) {
             "Recovery record sealed with the device passphrase."
@@ -119,17 +147,24 @@ object SqliteSeeder {
         secureMode: Boolean,
     ): String {
         val dao = VaultDatabases.warpVault(context).records()
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val payload =
+        val sealed =
             if (!secureMode) {
-                RawAes.gcmEncrypt(SecretKeySpec(WarpKeyBridge.materialize(), "AES"), iv, FLAG_L4.toByteArray())
+                val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                RawAes
+                    .gcmEncrypt(
+                        SecretKeySpec(WarpKeyBridge.materialize(context), "AES"),
+                        iv,
+                        FLAG_L4.toByteArray(),
+                    )
+                    .let { iv to it }
             } else {
-                val key = KeystoreVault.loadOrCreateKey("sqlite_l4")
-                RawAes.gcmEncrypt(key, iv, FLAG_L4.toByteArray())
+                SealedBox
+                    .seal(KeystoreVault.loadOrCreateKey("sqlite_l4"), FLAG_L4.toByteArray())
+                    .let { it.copyOf(12) to it.copyOfRange(12, it.size) }
             }
         runBlocking {
             dao.clear()
-            dao.insert(SealedRecord(recordId = "warp-core", payload = payload, nonce = iv))
+            dao.insert(SealedRecord(recordId = "warp-core", payload = sealed.second, nonce = sealed.first))
         }
         return if (!secureMode) {
             "Warp vault initialized. The key lives in the bridge, not in prefs."
@@ -272,8 +307,8 @@ class SqliteL4Challenge : TieredChallenge(
     owaspRefs = listOf("M9", "MASVS-STORAGE-2", "M7", "MASTG-TEST-0x54"),
     hints = listOf(
         "The key is assembled from obfuscated pieces at runtime — decompile the bridge.",
-        "WarpKeyBridge.materialize(): 'warp' + '-' + reversed(\"k3y-2026\"), hashed with SHA-256, cut to 16 bytes.",
-        "A Frida hook on SecretKeySpec.<init> prints the same bytes the moment the vault initializes.",
+        "Static halves are a dead end: half the material is per-install and Keystore-wrapped.",
+        "Open the gate under a Frida SecretKeySpec.<init> hook — the assembled key prints itself.",
     ),
     flag = FLAG_L4,
     learn = LearnContent(
@@ -284,8 +319,9 @@ class SqliteL4Challenge : TieredChallenge(
             "True protection keeps the material inside the TEE (Keystore/StrongBox) where " +
             "no hook can read it.",
         mastgRefs = listOf("MASVS-STORAGE-2", "MASVS-CRYPTO-2", "MASTG-TEST-0x54"),
-        vulnerableSnippet = "// p1 = { 'w','a','r','p' };  p2 = \"k3y-2026\"\n" +
-            "fun materialize() = sha256(p1 + '-' + p2.reversed()).copyOf(16)",
+        vulnerableSnippet = "fun materialize(ctx: Context) =\n" +
+            "    sha256(staticHalf() + installHalf(ctx)) // install half: Keystore-wrapped\n" +
+            "        .copyOf(16) // bytes exist in memory only when the gate opens",
         fixSnippet = "// Hardware-bound keys never materialize in app memory:\n" +
             "KeyGenerator.getInstance(\"AES\", \"AndroidKeyStore\")\n" +
             "    .apply { init(KeyGenParameterSpec.Builder(\"warp\", …).setIsStrongBoxBacked(true).build()) }",
@@ -299,9 +335,11 @@ class SqliteL4Challenge : TieredChallenge(
             note = "Initializes the warp vault on this device.",
             actions = listOf(
                 KitAction("Initialize warp vault") { ctx, secure -> SqliteSeeder.seedWarpVault(ctx, secure) },
-                KitAction("Show bridge diagnostics") { _, _ ->
+                KitAction("Show bridge diagnostics") { ctx, _ ->
                     "bridge = WarpKeyBridge@${System.identityHashCode(WarpKeyBridge).toString(16)} " +
-                        "(materialize() is native-gated)"
+                        "(install half wrapped: " +
+                        "${ctx.getSharedPreferences("warp_bridge_prefs", Context.MODE_PRIVATE)
+                            .getString("install_half", null) != null})"
                 },
             ),
         )

@@ -116,4 +116,6 @@
     <string name="challenge_gate_reset">Reset attempt</string>
     <!-- intentional: M10 seed — half of the crypto/hardcoded L2 derivation input -->
     <string name="partner_key_tag">partn3r-tag-2026</string>
+    <string name="oracle_crafted_label">Modified ciphertext (hex)</string>
+    <string name="oracle_submit">Submit to validator</string>
 </resources>

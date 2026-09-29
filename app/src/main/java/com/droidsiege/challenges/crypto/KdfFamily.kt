@@ -7,6 +7,7 @@ import com.droidsiege.challenges.common.HexCodec
 import com.droidsiege.challenges.common.KeystoreVault
 import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.RawAes
+import com.droidsiege.challenges.common.SealedBox
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.challenges.common.WeakKdf
 import com.droidsiege.core.Difficulty
@@ -33,12 +34,11 @@ object KdfVault {
             if (!secureMode) {
                 RawAes.cbcEncrypt(key, iv, plaintext.toByteArray())
             } else {
-                val ks = KeystoreVault.loadOrCreateKey("kdf_l1")
-                val iv12 = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val blob = SealedBox.seal(KeystoreVault.loadOrCreateKey("kdf_l1"), plaintext.toByteArray())
                 return listOf(
-                    "Parameters" to "Argon2-class KDF (Keystore-backed key), random nonce",
+                    "Parameters" to "Keystore-backed key, self-generated nonce",
                     "Sealed blob (b64)" to android.util.Base64.encodeToString(
-                        iv12 + RawAes.gcmEncrypt(ks, iv12, plaintext.toByteArray()),
+                        blob,
                         android.util.Base64.NO_WRAP,
                     ),
                 )
@@ -55,20 +55,20 @@ object KdfVault {
         val salt = "s1ege-salt-2026".toByteArray()
         val iterations = 100
         val password = "siege123"
-        val key =
-            if (!secureMode) {
-                SecretKeySpec(WeakKdf.pbkdf2(password.toCharArray(), salt, iterations).copyOf(16), "AES")
-            } else {
-                KeystoreVault.loadOrCreateKey("kdf_l2")
-            }
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val plaintext = "safe code: " + if (!secureMode) FLAG_L2 else "[PBKDF2-600k-sealed]"
-        val ct = RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+        val blob =
+            if (!secureMode) {
+                val key = SecretKeySpec(WeakKdf.pbkdf2(password.toCharArray(), salt, iterations).copyOf(16), "AES")
+                val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                iv + RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+            } else {
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("kdf_l2"), plaintext.toByteArray())
+            }
         return listOf(
             "KDF" to "PBKDF2WithHmacSHA256",
             "Iterations" to iterations.toString(),
             "Salt (ascii)" to String(salt),
-            "Ciphertext (b64, iv||ct)" to android.util.Base64.encodeToString(iv + ct, android.util.Base64.NO_WRAP),
+            "Ciphertext (b64, iv||ct)" to android.util.Base64.encodeToString(blob, android.util.Base64.NO_WRAP),
             "Password policy" to if (!secureMode) "user-chosen, 8 chars" else "vault-generated, 24 chars",
         )
     }
@@ -77,20 +77,20 @@ object KdfVault {
         val username = "player1"
         val salt = MessageDigest.getInstance("SHA-256").digest(username.toByteArray()).copyOf(16)
         val password = "letmein"
-        val key =
-            if (!secureMode) {
-                SecretKeySpec(WeakKdf.pbkdf2(password.toCharArray(), salt, 1_000).copyOf(16), "AES")
-            } else {
-                KeystoreVault.loadOrCreateKey("kdf_l3")
-            }
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val plaintext = "deposit code: " + if (!secureMode) FLAG_L3 else "[keystore-sealed]"
-        val ct = RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+        val blob =
+            if (!secureMode) {
+                val key = SecretKeySpec(WeakKdf.pbkdf2(password.toCharArray(), salt, 1_000).copyOf(16), "AES")
+                val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                iv + RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+            } else {
+                SealedBox.seal(KeystoreVault.loadOrCreateKey("kdf_l3"), plaintext.toByteArray())
+            }
         return listOf(
             "Username" to username,
             "KDF" to "PBKDF2-SHA256, 1,000 iterations",
             "Salt derivation" to "SHA-256(username)[..16]",
-            "Ciphertext (b64, iv||ct)" to android.util.Base64.encodeToString(iv + ct, android.util.Base64.NO_WRAP),
+            "Ciphertext (b64, iv||ct)" to android.util.Base64.encodeToString(blob, android.util.Base64.NO_WRAP),
         )
     }
 
@@ -99,15 +99,22 @@ object KdfVault {
         secureMode: Boolean,
     ): String {
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val key =
-            if (!secureMode) {
-                SecretKeySpec(WeakKdf.pbkdf2("correct-horse-battery".toCharArray(), salt, 210_000).copyOf(16), "AES")
-            } else {
-                KeystoreVault.loadOrCreateKey("kdf_l4")
-            }
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val plaintext = "vault code: $FLAG_L4"
-        val sealed = RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+        val keyBytes =
+            if (!secureMode) {
+                WeakKdf.pbkdf2("correct-horse-battery".toCharArray(), salt, 210_000).copyOf(16)
+            } else {
+                null
+            }
+        val key =
+            keyBytes?.let { SecretKeySpec(it, "AES") } ?: KeystoreVault.loadOrCreateKey("kdf_l4")
+        val sealed =
+            if (!secureMode) {
+                val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                iv + RawAes.gcmEncrypt(key, iv, plaintext.toByteArray())
+            } else {
+                SealedBox.seal(key, plaintext.toByteArray())
+            }
         val sealedNote = "sealed blob: ${sealed.size} bytes"
         if (!secureMode) {
             // "session convenience": the derived key is cached for quick re-unlock
@@ -170,8 +177,8 @@ class KdfL2Challenge : TieredChallenge(
     owaspRefs = listOf("M10", "MASVS-CRYPTO-2", "MASTG-TEST-0x27"),
     hints = listOf(
         "PBKDF2 cost is linear in iterations — 100 rounds is 6000x cheaper than the 600k standard.",
-        "The password is user-chosen and weak: try the wordlist in tools/weak_passwords.txt.",
-        "tools/brute_pbkdf2.py rebuilds the key for each candidate and AES-GCM-decrypts.",
+        "The password is user-chosen and weak: the wordlist ships in tools/weak_passwords.txt.",
+        "tools/brute_kdf.py pbkdf2 rebuilds the key per candidate and AES-GCM-decrypts.",
     ),
     flag = FLAG_L2,
     learn = LearnContent(
@@ -204,7 +211,7 @@ class KdfL3Challenge : TieredChallenge(
     hints = listOf(
         "The salt must be random, not derivable — a username is not entropy.",
         "salt = SHA-256(\"player1\")[..16]; the password is in the weak wordlist.",
-        "tools/brute_pbkdf2.py supports --username mode.",
+        "tools/brute_kdf.py pbkdf2 covers the same wordlist — the salt derives from the shown username.",
     ),
     flag = FLAG_L3,
     learn = LearnContent(

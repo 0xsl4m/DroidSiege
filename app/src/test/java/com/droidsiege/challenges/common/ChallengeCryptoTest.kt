@@ -69,6 +69,72 @@ class ChallengeCryptoTest {
     }
 
     @Test
+    fun randomNextIntBoundFollowsTheJavaSpec() {
+        // java.util.Random.nextInt(bound) draws next(31) with rejection for non-powers
+        // of two; pin the spec algorithm here so the python tooling stays in parity.
+        fun nextIntBound(
+            seed: Long,
+            bound: Int,
+        ): Int {
+            var s = (seed xor 0x5DEECE66D) and ((1L shl 48) - 1)
+
+            fun next(bits: Int): Int {
+                s = (s * 0x5DEECE66D + 0xB) and ((1L shl 48) - 1)
+                return (s ushr (48 - bits)).toInt()
+            }
+            return if (bound and -bound == bound) {
+                (bound * next(31)) ushr 31
+            } else {
+                while (true) {
+                    val bits = next(31)
+                    val value = bits % bound
+                    // java re-draws when bits - val + (bound - 1) overflows int
+                    val overflowCheck = (bits.toLong() - value + (bound - 1L)) and 0xFFFFFFFFL
+                    if (overflowCheck < 0x80000000L) {
+                        return value
+                    }
+                }
+                @Suppress("UNREACHABLE_CODE")
+                error("unreachable")
+            }
+        }
+        val fromApi = java.util.Random(7L).nextInt(1_000_000)
+        assertThat(nextIntBound(7L, 1_000_000)).isEqualTo(fromApi)
+        assertThat(fromApi).isIn(0 until 1_000_000)
+    }
+
+    @Test
+    fun keystreamFillIsBigEndianIntChunks() {
+        // The L4 tooling pack packs nextInt() big-endian; pin the byte order.
+        val keystream = ByteArray(4)
+        val prng = java.util.Random(0L)
+        var i = 0
+        while (i < keystream.size) {
+            java.nio.ByteBuffer
+                .allocate(4)
+                .putInt(prng.nextInt())
+                .array()
+                .forEach { b ->
+                    if (i < keystream.size) keystream[i++] = b
+                }
+        }
+        assertThat(HexCodec.toHex(keystream)).isEqualTo("bb20b460")
+    }
+
+    @Test
+    fun sealedBoxRoundTrips() {
+        val key = javax.crypto.spec.SecretKeySpec(
+            HexCodec.fromHex("00112233445566778899aabbccddeeff"),
+            "AES",
+        )
+        val secret = "DS{crypto_hardcoded_L1_41f7c2}"
+        val sealed = SealedBox.seal(key, secret.toByteArray())
+        // blob layout: 12-byte nonce ++ ciphertext(++ tag)
+        assertThat(sealed.size).isAtLeast(12 + 16 + secret.length)
+        assertThat(SealedBox.unseal(key, sealed).toString(Charsets.UTF_8)).isEqualTo(secret)
+    }
+
+    @Test
     fun weakKdfIsDeterministicAndWeak() {
         val a = WeakKdf.pbkdf2("siege123".toCharArray(), "s1ege-salt-2026".toByteArray(), 100)
         val b = WeakKdf.pbkdf2("siege123".toCharArray(), "s1ege-salt-2026".toByteArray(), 100)
