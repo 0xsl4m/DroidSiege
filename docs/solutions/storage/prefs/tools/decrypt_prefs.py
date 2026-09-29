@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """DroidSiege storage/prefs — reconstruct the L3/L4 keys and decrypt the stored blobs.
 
-L3: key = SHA-256("droidsiege_pref_secret_2024")[..16]  (strings.xml constant)
+L3: key = SHA-256("droidsiege_pref_secret_2024")[..16]  (plain Kotlin constant in PrefsVault)
 L4: master key = "droidsiege-mk!"[..16] and the plaintext support_cache sits next to it
 """
 import base64

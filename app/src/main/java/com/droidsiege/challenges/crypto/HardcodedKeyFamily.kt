@@ -211,7 +211,7 @@ class HardcodedL2Challenge : TieredChallenge(
     owaspRefs = listOf("M10", "MASVS-CRYPTO-1", "MASTG-TEST-0x24"),
     hints = listOf(
         "Both halves ship inside the APK — the split is between files, not parties.",
-        "BuildConfig.WALLET_KEY_PART_A is in app/build.gradle.kts; part B is in strings.xml.",
+        "Part A is in app/build.gradle.kts; part B is a Kotlin literal in HardcodedKeyVault: install_seed_2026.",
         "SHA-256(partA + \"install_seed_2026\")[..16] is the AES key.",
     ),
     flag = FLAG_L2,
