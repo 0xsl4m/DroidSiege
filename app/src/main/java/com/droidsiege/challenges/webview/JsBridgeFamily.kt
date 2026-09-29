@@ -35,6 +35,9 @@ internal fun BridgeHost(
     initialJs: String,
     requireToken: Boolean = false,
     withFileReader: Boolean = false,
+    /** the one secret THIS tier's bridge may return — nothing else is mounted. */
+    bridgeSecret: String = WebViewFlags.BRIDGE_L1,
+    premiumSecret: String? = null,
 ) {
     val context = LocalContext.current
     var result by remember { mutableStateOf("") }
@@ -53,8 +56,8 @@ internal fun BridgeHost(
             ),
             bridge = BridgeSurface(
                 secure = secure,
-                bridgeSecret = WebViewFlags.BRIDGE_L1,
-                premiumSecret = WebViewFlags.BRIDGE_L2,
+                bridgeSecret = bridgeSecret,
+                premiumSecret = premiumSecret ?: "DENIED",
                 onResult = { result = it },
                 privateFileReader = if (withFileReader) {
                     { name ->
@@ -132,6 +135,7 @@ class JsBridgeL1Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         BridgeHost(
             secure = secureMode,
+            bridgeSecret = WebViewFlags.BRIDGE_L1,
             initialJs = "SiegeBridge.reportResult(SiegeBridge.getRecoveryCode())",
         )
     }
@@ -169,6 +173,7 @@ class JsBridgeL2Challenge : TieredChallenge(
         BridgeHost(
             secure = secureMode,
             requireToken = true,
+            premiumSecret = WebViewFlags.BRIDGE_L2,
             initialJs = "var t = document.getElementById('token').value; " +
                 "SiegeBridge.reportResult(SiegeBridge.getPremiumCode(t))",
         )
@@ -209,6 +214,7 @@ class JsBridgeL3Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         BridgeHost(
             secure = secureMode,
+            bridgeSecret = WebViewFlags.BRIDGE_L3,
             initialJs = "SiegeBridge.reportResult(SiegeBridge.getRecoveryCode())",
         )
     }

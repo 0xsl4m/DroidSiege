@@ -22,11 +22,18 @@ import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
 import java.io.File
 
-private const val SECRET_FILE = "wv_secret.txt"
+private const val SECRET_FILE_L1 = "wv_secret.txt"
+private const val SECRET_FILE_L3 = "secret_flag.txt"
+private const val SECRET_FILE_L4 = "wv_escrow.txt"
 
-private fun plantWebViewSecret(context: Context) {
-    val f = File(context.filesDir, SECRET_FILE)
-    if (!f.exists()) f.writeText(WebViewFlags.FILE_L1)
+private fun plantWebViewSecret(
+    context: Context,
+    fileName: String = SECRET_FILE_L1,
+    content: String = WebViewFlags.FILE_L1,
+): File {
+    val f = File(context.filesDir, fileName)
+    if (!f.exists()) f.writeText(content)
+    return f
 }
 
 class FileAccessL1Challenge : TieredChallenge(
@@ -80,7 +87,7 @@ class FileAccessL1Challenge : TieredChallenge(
                         view?.evaluateJavascript(
                             "try { " +
                                 "var x = new XMLHttpRequest(); " +
-                                "x.open('GET', 'file:///data/data/com.droidsiege/files/$SECRET_FILE', false); " +
+                                "x.open('GET', 'file:///data/data/com.droidsiege/files/$SECRET_FILE_L1', false); " +
                                 "x.send(null); " +
                                 "x.responseText; " +
                                 "} catch (e) { 'FILE ACCESS ERROR: ' + e.message }",
@@ -94,7 +101,7 @@ class FileAccessL1Challenge : TieredChallenge(
             Button(
                 onClick = {
                     plantWebViewSecret(context)
-                    output = "escrow planted: " + File(context.filesDir, SECRET_FILE).absolutePath
+                    output = "escrow planted: " + File(context.filesDir, SECRET_FILE_L1).absolutePath
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Plant escrow file") }
@@ -109,7 +116,7 @@ class FileAccessL1Challenge : TieredChallenge(
 }
 
 class FileAccessL2Challenge : TieredChallenge(
-    category = "network",
+    category = "webview",
     slug = "fileaccess",
     level = Difficulty.MEDIUM,
     title = "Unvalidated Load",
@@ -174,7 +181,7 @@ class FileAccessL2Challenge : TieredChallenge(
 }
 
 class FileAccessL3Challenge : TieredChallenge(
-    category = "components",
+    category = "webview",
     slug = "fileaccess",
     level = Difficulty.HARD,
     title = "Provider Traversal Read",
@@ -219,7 +226,7 @@ class FileAccessL3Challenge : TieredChallenge(
                         }
                     }
                     webView.loadUrl(
-                        "content://com.droidsiege.vault/files/notes/../../secret_flag.txt",
+                        "content://com.droidsiege.vault/files/notes/../../$SECRET_FILE_L3",
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -239,7 +246,7 @@ class FileAccessL4Challenge : TieredChallenge(
     owaspRefs = listOf("M4", "MASVS-PLATFORM-2", "M9", "MASTG-TEST-0x58"),
     hints = listOf(
         "The file:// page runs XHR (universal access) then calls SiegeBridge.reportResult.",
-        "Payload: read file:///data/data/com.droidsiege/files/wv_secret.txt via XHR and report it.",
+        "Payload: read file:///data/data/com.droidsiege/files/wv_escrow.txt via XHR and report it.",
         "Secure builds: flags off and no bridge — both surfaces closed.",
     ),
     flag = WebViewFlags.FILE_L4,
@@ -259,7 +266,7 @@ class FileAccessL4Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         val context = LocalContext.current
-        plantWebViewSecret(context)
+        plantWebViewSecret(context, SECRET_FILE_L4, WebViewFlags.FILE_L4)
         var result by remember { mutableStateOf("") }
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
             ChallengeWebView(

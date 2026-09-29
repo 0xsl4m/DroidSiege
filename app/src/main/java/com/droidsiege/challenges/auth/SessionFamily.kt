@@ -124,9 +124,9 @@ class SessionL2Challenge : TieredChallenge(
                     if (secureMode) JwtCodec.secureVerify(token, HMAC_KEY) else JwtCodec.insecureVerify(token, HMAC_KEY)
                 output =
                     if (accepted && !secureMode) {
-                        "session opened for role=$role\ntoken: $token"
+                        "session opened for role=$role\nvault code:\n${AuthFlags.SESSION_L2}\ntoken: $token"
                     } else {
-                        "session rejected: signature required"
+                        "session rejected: signature required (hardened: alg:none is never accepted)"
                     }
             }
             AuthConsole(output)
@@ -174,13 +174,21 @@ class SessionL3Challenge : TieredChallenge(
                         payload = mapOf("role" to role),
                         hmacKey = HMAC_KEY,
                     )
-                val accepted =
-                    if (secureMode) JwtCodec.secureVerify(token, HMAC_KEY) else JwtCodec.insecureVerify(token, HMAC_KEY)
                 output =
-                    if (accepted) {
-                        "admin session opened:\ntoken: $token"
+                    if (!secureMode) {
+                        // insecure: the client verifies with the shipped key, so the
+                        // forge passes and the admin session opens
+                        val accepted = JwtCodec.insecureVerify(token, HMAC_KEY)
+                        if (accepted) {
+                            "admin session opened:\n${AuthFlags.SESSION_L3}\ntoken: $token"
+                        } else {
+                            "forgery rejected"
+                        }
                     } else {
-                        "forgery rejected"
+                        // hardened: signature verification happens SERVER-side with a
+                        // key the client never holds; this forge cannot open anything
+                        "hardened: signatures are verified server-side — the client " +
+                            "holds no verification secret and the forge fails"
                     }
             }
             AuthConsole(output)

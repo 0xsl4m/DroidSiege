@@ -55,51 +55,29 @@ class XssL1Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
-        val context = LocalContext.current
         var note by rememberSaveable { mutableStateOf("hello") }
         var result by remember { mutableStateOf("") }
-        val webView = remember { mutableStateOf<WebView?>(null) }
+        val rendered = if (secureMode) {
+            note.replace("<", "&lt;").replace(">", "&gt;")
+        } else {
+            note
+        }
+        var webView by remember { mutableStateOf<WebView?>(null) }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = note,
-                onValueChange = { note = it },
-                label = { Text("note") },
-                modifier = Modifier.fillMaxWidth(),
+            AuthLikeField("note", note) { note = it }
+            ChallengeWebView(
+                pageHtml = WebViewPages.notePage(rendered, XSS_SECRET_L1),
+                bridge = BridgeSurface(
+                    secure = secureMode,
+                    bridgeSecret = "",
+                    premiumSecret = "",
+                    onResult = { result = it },
+                ),
+                onWebViewReady = { webView = it },
             )
             Button(
                 onClick = {
-                    val rendered = if (secureMode) {
-                        note.replace("<", "&lt;").replace(">", "&gt;")
-                    } else {
-                        note
-                    }
-                    webView.value?.let { view ->
-                        if (!secureMode) {
-                            // the bridge the injected reader reports through
-                            view.addJavascriptInterface(
-                                com.droidsiege.challenges.webview.BridgeSurface(
-                                    secure = false,
-                                    bridgeSecret = "",
-                                    premiumSecret = "",
-                                    onResult = { result = it },
-                                ),
-                                "SiegeBridge",
-                            )
-                        }
-                        view.loadDataWithBaseURL(
-                            "https://offers.siegeapp.dev/",
-                            WebViewPages.notePage(rendered, XSS_SECRET_L1),
-                            "text/html",
-                            "utf-8",
-                            null,
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Render note") }
-            Button(
-                onClick = {
-                    webView.value?.evaluateJavascript(
+                    webView?.evaluateJavascript(
                         "SiegeBridge.reportResult(document.getElementById('secret').textContent); ''",
                         null,
                     )
@@ -109,6 +87,20 @@ class XssL1Challenge : TieredChallenge(
             ChallengeConsole(result)
         }
     }
+}
+
+@Composable
+private fun AuthLikeField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    androidx.compose.material3.OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { androidx.compose.material3.Text(label) },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 class XssL2Challenge : TieredChallenge(
@@ -143,35 +135,33 @@ class XssL2Challenge : TieredChallenge(
         val prefs = context.getSharedPreferences("siege_xss_prefs", Context.MODE_PRIVATE)
         var stored by rememberSaveable { mutableStateOf(prefs.getString("note", "no note") ?: "") }
         var result by remember { mutableStateOf("") }
-        val webView = remember { mutableStateOf<WebView?>(null) }
+        var webView by remember { mutableStateOf<WebView?>(null) }
+        val rendered =
+            if (secureMode) {
+                stored.replace("<", "&lt;").replace(">", "&gt;")
+            } else {
+                stored
+            }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = stored,
-                onValueChange = {
-                    stored = it
-                    prefs.edit().putString("note", it).apply()
-                },
-                label = { Text("stored note") },
-                modifier = Modifier.fillMaxWidth(),
+            AuthLikeField("stored note", stored) {
+                stored = it
+                prefs.edit().putString("note", it).apply()
+            }
+            ChallengeWebView(
+                pageHtml = WebViewPages.notePage(rendered, XSS_SECRET_L2),
+                bridge = BridgeSurface(
+                    secure = secureMode,
+                    bridgeSecret = "",
+                    premiumSecret = "",
+                    onResult = { result = it },
+                ),
+                onWebViewReady = { webView = it },
             )
-            Button(
-                onClick = {
-                    val rendered =
-                        if (secureMode) {
-                            stored.replace("<", "&lt;").replace(">", "&gt;")
-                        } else {
-                            stored
-                        }
-                    webView.value?.loadDataWithBaseURL(
-                        "https://offers.siegeapp.dev/",
-                        WebViewPages.notePage(rendered, XSS_SECRET_L2),
-                        "text/html",
-                        "utf-8",
-                        null,
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Render stored note") }
+            Text(
+                text = "the WebView re-renders the stored note on every change",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             ChallengeConsole(result)
         }
     }
@@ -207,36 +197,27 @@ class XssL3Challenge : TieredChallenge(
 ) {
     @Composable
     override fun Screen(secureMode: Boolean) {
-        var data by rememberSaveable { mutableStateOf("hi") }
+        var data by rememberSaveable { mutableStateOf("hi') ; } //") }
         var result by remember { mutableStateOf("") }
-        val webView = remember { mutableStateOf<WebView?>(null) }
+        var webView by remember { mutableStateOf<WebView?>(null) }
+        val page =
+            WebViewPages.notePage("", XSS_SECRET_L3) +
+                "<script>function showNote(t){document.getElementById('out').textContent=t}</script>"
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = data,
-                onValueChange = { data = it },
-                label = { Text("note data") },
-                modifier = Modifier.fillMaxWidth(),
+            AuthLikeField("note data", data) { data = it }
+            ChallengeWebView(
+                pageHtml = page,
+                bridge = BridgeSurface(
+                    secure = secureMode,
+                    bridgeSecret = XSS_SECRET_L3,
+                    premiumSecret = "",
+                    onResult = { result = it },
+                ),
+                onWebViewReady = { webView = it },
             )
             Button(
                 onClick = {
-                    val view = webView.value ?: return@Button
-                    view.addJavascriptInterface(
-                        BridgeSurface(
-                            secure = secureMode,
-                            bridgeSecret = XSS_SECRET_L3,
-                            premiumSecret = "",
-                            onResult = { result = it },
-                        ),
-                        "SiegeBridge",
-                    )
-                    view.loadDataWithBaseURL(
-                        "https://offers.siegeapp.dev/",
-                        WebViewPages.notePage("", XSS_SECRET_L3) +
-                            "<script>function showNote(t){document.getElementById('out').textContent=t}</script>",
-                        "text/html",
-                        "utf-8",
-                        null,
-                    )
+                    val view = webView ?: return@Button
                     val injected =
                         if (secureMode) {
                             val encoded = org.json.JSONObject.quote(data)
@@ -248,18 +229,6 @@ class XssL3Challenge : TieredChallenge(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Render note data") }
-            Button(
-                onClick = {
-                    val payload =
-                        if (secureMode) {
-                            "showNote('[encoded]')"
-                        } else {
-                            "'); SiegeBridge.reportResult('$XSS_SECRET_L3'); //"
-                        }
-                    webView.value?.evaluateJavascript("showNote('$payload')", null)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Fire pre-built break-out") }
             ChallengeConsole(result)
         }
     }
@@ -297,45 +266,29 @@ class XssL4Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         var result by remember { mutableStateOf("") }
-        val webView = remember { mutableStateOf<WebView?>(null) }
+        var webView by remember { mutableStateOf<WebView?>(null) }
+        val note =
+            if (secureMode) {
+                "[sanitized]"
+            } else {
+                "<script>SiegeBridge.reportResult(SiegeBridge.getRecoveryCode())</script>"
+            }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = "the stored note for this device carries the payload:",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(
-                onClick = {
-                    val note =
-                        if (secureMode) {
-                            "[sanitized]"
-                        } else {
-                            "<script>SiegeBridge.reportResult(SiegeBridge.getRecoveryCode())</script>"
-                        }
-                    val bridge =
-                        if (!secureMode) {
-                            com.droidsiege.challenges.webview.BridgeSurface(
-                                secure = false,
-                                bridgeSecret = XSS_SECRET_L4,
-                                premiumSecret = "",
-                                onResult = { result = it },
-                            )
-                        } else {
-                            null
-                        }
-                    webView.value?.let { view ->
-                        bridge?.let { view.addJavascriptInterface(it, "SiegeBridge") }
-                        view.loadDataWithBaseURL(
-                            "https://offers.siegeapp.dev/",
-                            WebViewPages.notePage(note, XSS_SECRET_L4),
-                            "text/html",
-                            "utf-8",
-                            null,
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Render stored note") }
+            ChallengeWebView(
+                pageHtml = WebViewPages.notePage(note, XSS_SECRET_L4),
+                bridge = BridgeSurface(
+                    secure = secureMode,
+                    bridgeSecret = XSS_SECRET_L4,
+                    premiumSecret = "",
+                    onResult = { result = it },
+                ),
+                onWebViewReady = { webView = it },
+            )
             ChallengeConsole(result)
         }
     }

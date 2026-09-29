@@ -103,15 +103,15 @@ object InjectLab {
         @Suppress("UnusedParameter") context: Context,
         text: String,
         secure: Boolean,
-    ): String {
-        val secret = FORMAT_FLAG
-        return if (secure) {
+    ): String =
+        if (secure) {
+            // hardened: fixed format, user text as an argument
             String.format(java.util.Locale.US, "receipt: %s", text)
         } else {
-            // the user text is used as the format string itself
-            String.format(text)
-        }.let { "$it\n(secret in scope: $secret)" }
-    }
+            // insecure: the user text IS the format; the secret is the formatter's
+            // only vararg, so a %s in the caller text prints it
+            String.format(text, FORMAT_FLAG)
+        }
 
     /** L4 — placeholder parser that trusts an attacker-supplied length. */
     fun nativeParse(
@@ -119,10 +119,18 @@ object InjectLab {
         declaredLength: Int,
         secure: Boolean,
     ): String {
-        // PLACEHOLDER Phase-5 native; the over-read is simulated with a pooled buffer
-        val buffer = SECRET_POOL + input
-        val length = if (secure) input.length.coerceAtMost(SECRET_POOL.length) else declaredLength
-        return buffer.substring(0, length.coerceAtMost(buffer.length))
+        // PLACEHOLDER Phase-5 native; the over-read is simulated with a pooled buffer.
+        // the secret sits AFTER the user's record in the pool, so the over-read walks
+        // into it when the declared length exceeds the record.
+        val pool = SECRET_POOL + input
+        val length =
+            if (secure) {
+                // hardened: clamp to the caller's own record region
+                input.length
+            } else {
+                declaredLength
+            }
+        return pool.substring(0, length.coerceIn(0, pool.length))
     }
 }
 
@@ -183,7 +191,7 @@ class InjectL2Challenge : TieredChallenge(
     owaspRefs = listOf("M4", "MASVS-CODE-4", "M9", "MASTG-TEST-0x57"),
     hints = listOf(
         "openNote resolves notes/<name> non-canonically.",
-        "Name: ../secret_flag.txt (plant it with the action).",
+        "Name: ../note_secret.txt (planted on entry).",
         "Secure builds canonicalize and refuse escapes.",
     ),
     flag = TRAVERSE_FLAG,
@@ -204,7 +212,7 @@ class InjectL2Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         val context = LocalContext.current
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            File(context.filesDir, "secret_flag.txt").writeText(TRAVERSE_FLAG)
+            File(context.filesDir, "note_secret.txt").writeText(TRAVERSE_FLAG)
         }
         var name by rememberSaveable { mutableStateOf("welcome.txt") }
         var output by remember { mutableStateOf("") }

@@ -215,20 +215,28 @@ class AuthCheckL4Challenge : TieredChallenge(
     override fun Screen(secureMode: Boolean) {
         var output by remember { mutableStateOf("") }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val context = LocalContext.current
             AuthButton("Run the chain (forge + flip)") {
+                // the chain: forge an HS256 admin token, then the client gate demands
+                // BOTH the forged admin claim AND the locally flipped role flag
                 val token =
                     JwtCodec.encode(
                         header = mapOf("alg" to "HS256", "typ" to "JWT"),
                         payload = mapOf("role" to "admin"),
                         hmacKey = "siege-jwt-secret-2026".toByteArray(),
                     )
-                val gate =
-                    (token.hashCode() xor "s1ege".hashCode() xor "s1ege".hashCode()) != 0
+                val claimedRole = JwtCodec.decode(token).payload["role"]
+                val roleFlag = adminFlag(context)
+                val gate = claimedRole == "admin" && roleFlag
                 output =
-                    if (!secureMode && gate) {
-                        "gate opened:\n${AuthFlags.CHECK_L4}"
-                    } else {
-                        "hardened: server entitlements — no client gate to satisfy"
+                    when {
+                        secureMode ->
+                            "hardened: server entitlements — the forged claim and the " +
+                                "local flag are both ignored"
+                        gate ->
+                            "gate opened (forged claim + flipped flag):\n${AuthFlags.CHECK_L4}"
+                        else ->
+                            "gate closed — flip the role flag AND forge the admin token"
                     }
             }
             AuthConsole(output)

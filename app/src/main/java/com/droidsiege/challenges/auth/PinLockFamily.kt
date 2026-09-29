@@ -193,9 +193,14 @@ class PinLockL3Challenge : TieredChallenge(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            AuthButton("Authenticate (biometric sim)") { unlocked = true }
+            AuthButton("Authenticate (biometric sim)") { unlocked = !secureMode }
             if (unlocked) {
                 AuthConsole("vault code:\n${AuthFlags.PIN_L3}")
+            } else if (secureMode) {
+                AuthConsole(
+                    "hardened: the vault decrypts through a CryptoObject-bound " +
+                        "Keystore key — the success boolean alone unlocks nothing",
+                )
             }
         }
     }
