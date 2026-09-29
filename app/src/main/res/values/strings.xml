@@ -1,5 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DroidSiege</string>
-    <string name="home_version">Version %1$s</string>
+    <string name="settings_version">DroidSiege version %1$s</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_score">Score: %1$d</string>
+    <string name="cd_solved">Solved</string>
+    <string name="cd_open_menu">Open navigation menu</string>
+    <string name="cd_back">Back</string>
+
+    <!-- Shell -->
+    <string name="drawer_brand">SiegeApp</string>
+
+    <!-- Challenges hub & category -->
+    <string name="hub_solved_of">Solved %1$d of %2$d challenges</string>
+    <string name="category_progress">%1$d/%2$d solved</string>
+    <string name="category_empty">No challenges registered in this category yet.</string>
+    <string name="challenge_points">%1$d pts</string>
+
+    <!-- Detail screen -->
+    <string name="tab_challenge">Challenge</string>
+    <string name="tab_learn">Learn</string>
+    <string name="tab_hints">Hints</string>
+    <string name="section_owasp">OWASP mapping</string>
+    <string name="section_challenge_screen">Challenge</string>
+    <string name="section_flag">Submit the flag</string>
+    <string name="flag_input_label">Flag</string>
+    <string name="flag_submit">Submit flag</string>
+    <string name="flag_solved_message">Solved — flag accepted</string>
+    <string name="detail_flag_accepted">Flag accepted — +%1$d points</string>
+    <string name="detail_flag_wrong">Wrong flag. Keep digging.</string>
+    <string name="detail_already_solved">Challenge already solved</string>
+
+    <!-- Learn tab -->
+    <string name="learn_vulnerable">Vulnerable</string>
+    <string name="learn_hardened">Hardened</string>
+    <string name="learn_references">References</string>
+    <string name="learn_diff">Vulnerable vs. hardened code</string>
+
+    <!-- Hints -->
+    <string name="hint_penalty_note">Revealing hints deducts points from your final award (never below 10 percent).</string>
+    <string name="hint_number">Hint %1$d</string>
+    <string name="hint_locked">Hint %1$d — locked</string>
+    <string name="hint_cost_warning">Revealing this hint deducts %1$d points.</string>
+    <string name="hint_reveal">Reveal hint %1$d (−%2$d pts)</string>
+    <string name="hint_award_preview">Award if solved now: %1$d pts</string>
+
+    <!-- Secure mode -->
+    <string name="secure_toggle_label">Secure mode</string>
+    <string name="secure_toggle_description">Switches every challenge between vulnerable and hardened behavior.</string>
+
+    <!-- Modules -->
+    <string name="module_section_title">Challenges in this module</string>
+    <string name="module_empty">No challenges in this module yet.</string>
+    <string name="module_stub_message">Demo module — the real flow lands in a later phase.</string>
+    <string name="module_stub_action">Try it</string>
+    <string name="login_title">Sign in to SiegeApp</string>
+    <string name="login_email">Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_sign_in">Sign in</string>
+    <string name="login_forgot">Forgot password?</string>
+    <string name="wallet_balance_label">Total balance</string>
+    <string name="wallet_balance_value">$1,284.50</string>
+    <string name="wallet_send">Send money</string>
+    <string name="wallet_tx1_name">Coffee — Elm St.</string>
+    <string name="wallet_tx1_amount">−$4.20</string>
+    <string name="wallet_tx2_name">Wallet top-up</string>
+    <string name="wallet_tx2_amount">+$50.00</string>
+    <string name="wallet_tx3_name">Ride share</string>
+    <string name="wallet_tx3_amount">−$12.75</string>
+    <string name="vault_title">Your vault</string>
+    <string name="vault_add">Add secret</string>
+    <string name="vault_item1_name">Wi-Fi password</string>
+    <string name="vault_item1_meta">Edited yesterday</string>
+    <string name="vault_item2_name">Bank PIN</string>
+    <string name="vault_item2_meta">Synced 2 days ago</string>
+    <string name="vault_item3_name">Recovery codes</string>
+    <string name="vault_item3_meta">3 of 10 remaining</string>
+    <string name="chat_title">Messages</string>
+    <string name="chat_conv1_name">Nour</string>
+    <string name="chat_conv1_preview">Sent the report 👍</string>
+    <string name="chat_conv2_name">Support</string>
+    <string name="chat_conv2_preview">Your ticket is being reviewed</string>
+    <string name="chat_conv3_name">Ahmed</string>
+    <string name="chat_conv3_preview">See you tomorrow!</string>
+    <string name="offers_title">Offers &amp; news</string>
+    <string name="offers_promo1_title" formatted="false">50% off your first order</string>
+    <string name="offers_promo1_body">Use the app this week and get half off any partner store.</string>
+    <string name="offers_open">Open in reader</string>
+    <string name="profile_name">siege_player</string>
+    <string name="profile_member_since">Member since 2026</string>
+    <string name="profile_stat_challenges">Challenges solved</string>
+    <string name="profile_stat_value">0</string>
+
+    <!-- Settings -->
+    <string name="settings_backend_section">Backend</string>
+    <string name="settings_backend_label">Backend base URL</string>
+    <string name="settings_backend_supporting">Used by the network challenges from Phase 6 onward. Default points at the local emulator host.</string>
+    <string name="settings_backend_save">Save URL</string>
+    <string name="settings_backend_saved">Backend URL saved</string>
+    <string name="settings_backend_invalid">URL must start with http:// or https://</string>
+    <string name="settings_progress_section">Progress</string>
+    <string name="settings_reset">Reset progress</string>
+    <string name="settings_reset_title">Reset all progress?</string>
+    <string name="settings_reset_text">This clears the scoreboard permanently. Solved challenges can be re-solved.</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_cancel">Cancel</string>
+    <string name="settings_reset_done">Progress cleared</string>
+
+    <!-- Demo challenge -->
+    <string name="demo_screen_caption">The demo secret, rendered exactly as a careless app would:</string>
+    <string name="demo_masked">Hidden by secure mode.</string>
 </resources>

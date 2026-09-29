@@ -10,5 +10,10 @@ trim_trailing_whitespace = true
 [*.{kt,kts}]
 # Composable functions use PascalCase by convention; the rule only knows camelCase.
 ktlint_standard_function-naming = disabled
+# Conflicts with the IntelliJ default of keeping short wrapped expressions on the
+# assignment line; also not auto-correctable, which blocks ktlintFormat runs.
+ktlint_standard_multiline-expression-wrapping = disabled
+# Runs after multiline-expression-wrapping and hard-requires it, so it goes too.
+ktlint_standard_string-template-indent = disabled
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true
