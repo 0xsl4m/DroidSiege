@@ -24,6 +24,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        // intentional: half of the crypto/hardcoded L2 key ships in build config (M10 seed)
+        buildConfigField("String", "WALLET_KEY_PART_A", "\"w4ll3t-p4rt-\"")
     }
 
     buildTypes {
@@ -78,6 +80,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -103,6 +106,7 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.truth)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.hilt.android.testing)

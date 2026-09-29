@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- intentional: the M9 extstorage L3 seed — a deliberately broad files-path so the
+     whole internal files directory is provider-shareable. A hardened app shares one
+     narrow outgoing directory instead. -->
+<paths>
+    <files-path
+        name="shared"
+        path="." />
+</paths>

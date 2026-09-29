@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- intentional: the M9 backup family (L3) seed — these rules deliberately sweep
+     every database and preference file into the backup set. A hardened app
+     would exclude sensitive domains here. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="file" path="support/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="file" path="support/" />
+    </device-transfer>
+</data-extraction-rules>

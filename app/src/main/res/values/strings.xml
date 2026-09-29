@@ -111,4 +111,9 @@
     <!-- Demo challenge -->
     <string name="demo_screen_caption">The demo secret, rendered exactly as a careless app would:</string>
     <string name="demo_masked">Hidden by secure mode.</string>
+
+    <!-- Challenge kit -->
+    <string name="challenge_gate_reset">Reset attempt</string>
+    <!-- intentional: M10 seed — half of the crypto/hardcoded L2 derivation input -->
+    <string name="partner_key_tag">partn3r-tag-2026</string>
 </resources>
