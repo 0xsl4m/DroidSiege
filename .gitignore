@@ -1,0 +1,27 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Kotlin / Java
+*.class
+*.log
+hs_err_pid*
+
+# Backend
+backend/build/
+backend/.gradle/
+backend/out/
+
+# Node (if any tooling)
+node_modules/
