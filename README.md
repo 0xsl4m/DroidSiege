@@ -61,18 +61,22 @@ the Challenges hub (grouped by OWASP category with difficulty tiers).
 
 ## 🎯 Vulnerability coverage (OWASP Mobile Top 10 · 2024)
 
-| # | Category | Status |
-|---|----------|--------|
-| M1 | Improper Credential Usage | 🚧 Planned |
-| M2 | Inadequate Supply Chain Security | 🚧 Planned |
-| M3 | Insecure Authentication / Authorization | 🚧 Planned |
-| M4 | Insufficient Input/Output Validation | 🚧 Planned |
-| M5 | Insecure Communication | 🚧 Planned |
-| M6 | Inadequate Privacy Controls | 🚧 Planned |
-| M7 | Insufficient Binary Protections | 🚧 Planned |
-| M8 | Security Misconfiguration | 🚧 Planned |
-| M9 | Insecure Data Storage | 🏗️ In progress |
-| M10 | Insufficient Cryptography | 🚧 Planned |
+| # | Category | Challenges | Write-ups |
+|---|----------|-----------:|-----------|
+| M1 | Improper Credential Usage | 8 (auth/creds, auth/pinlock) | [auth](docs/solutions/auth/creds) · [pinlock](docs/solutions/auth/pinlock) |
+| M2 | Inadequate Supply Chain Security | 8 (vulndep, dynload) | [vulndep](docs/solutions/supplychain/vulndep) · [dynload](docs/solutions/supplychain/dynload) |
+| M3 | Insecure Authentication / Authorization | 8 in-app (session, authcheck) + 12 server-side (idor, brokenauth, massassign) | [session](docs/solutions/auth/session) · [authcheck](docs/solutions/auth/authcheck) · [idor](docs/solutions/backend/idor) · [brokenauth](docs/solutions/backend/brokenauth) · [massassign](docs/solutions/backend/massassign) |
+| M4 | Insufficient Input/Output Validation | 16 (xss, jsbridge, fileaccess, inject) | [webview](docs/solutions/webview/xss) · [jsbridge](docs/solutions/webview/jsbridge) · [fileaccess](docs/solutions/webview/fileaccess) · [inject](docs/solutions/webview/inject) |
+| M5 | Insecure Communication | 16 (cleartext, trustall, pinning, urlleak) | [cleartext](docs/solutions/network/cleartext) · [trustall](docs/solutions/network/trustall) · [pinning](docs/solutions/network/pinning) · [urlleak](docs/solutions/network/urlleak) |
+| M6 | Inadequate Privacy Controls | 12 (pii-logs, perms, recents-priv) | [pii-logs](docs/solutions/privacy/pii-logs) · [perms](docs/solutions/privacy/perms) · [recents-priv](docs/solutions/privacy/recents-priv) |
+| M7 | Insufficient Binary Protections | 10 (rootdetect, fridadetect, noobfusc) + native M7 overlap | [rootdetect](docs/solutions/binary/rootdetect) · [fridadetect](docs/solutions/binary/fridadetect) · [noobfusc](docs/solutions/binary/noobfusc) · [native](docs/solutions/advanced/native) |
+| M8 | Security Misconfiguration | 16 (exported, provider, intentredir, deeplink) + modern attacks | [exported](docs/solutions/components/exported) · [provider](docs/solutions/components/provider) · [intentredir](docs/solutions/components/intentredir) · [deeplink](docs/solutions/components/deeplink) · [strandhogg](docs/solutions/advanced/strandhogg) · [tapjacking](docs/solutions/advanced/tapjacking) · [customtabs](docs/solutions/advanced/customtabs) |
+| M9 | Insecure Data Storage | 28 (prefs, sqlite, extstorage, logs, clipboard, screens, backup) | [prefs](docs/solutions/storage/prefs) · [sqlite](docs/solutions/storage/sqlite) · [extstorage](docs/solutions/storage/extstorage) · [logs](docs/solutions/storage/logs) · [clipboard](docs/solutions/storage/clipboard) · [screens](docs/solutions/storage/screens) · [backup](docs/solutions/storage/backup) |
+| M10 | Insufficient Cryptography | 20 (hardcoded, ecbiv, kdf, random, homegrown) | [hardcoded](docs/solutions/crypto/hardcoded) · [ecbiv](docs/solutions/crypto/ecbiv) · [kdf](docs/solutions/crypto/kdf) · [random](docs/solutions/crypto/random) · [homegrown](docs/solutions/crypto/homegrown) |
+
+**150 in-app challenges** (37 categories/families × graded tiers + the onboarding demo) plus
+**12 server-side tiers** on the lab backend — every one with vulnerable **and** hardened
+paths, hints, and a full write-up with a verified tooling pack.
 
 See the full challenge catalog and the level design in [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 
