@@ -26,3 +26,5 @@ solve the Demo challenge, then pick a category. Stuck? Hints are in-app; full sp
 [docs/solutions/](solutions/).
 
 ⚠️ Educational use only. Never deploy the lab backend anywhere public.
+
+![Challenge home](screenshots/home.png)

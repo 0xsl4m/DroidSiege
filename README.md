@@ -82,6 +82,12 @@ See the full challenge catalog and the level design in [**docs/ARCHITECTURE.md**
 
 ---
 
+## 📸 The range at a glance
+
+| Home | Category | Challenge |
+|---|---|---|
+| ![Challenge home](docs/screenshots/home.png) | ![Category](docs/screenshots/category.png) | ![Challenge](docs/screenshots/challenge.png) |
+
 ## 🚀 Getting started
 
 ### The app
