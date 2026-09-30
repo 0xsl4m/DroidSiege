@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.droidsiege.challenges.common.ChallengeConsole
 import com.droidsiege.challenges.common.TieredChallenge
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent

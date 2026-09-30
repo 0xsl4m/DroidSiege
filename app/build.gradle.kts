@@ -13,7 +13,21 @@ android {
     namespace = "com.droidsiege"
     compileSdk = 35
 
+    // intentional: NDK build for the M7/M4 native challenge families (Phase 5)
+    ndkVersion = "27.2.12479018"
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
     defaultConfig {
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
         applicationId = "com.droidsiege"
         minSdk = 24
         targetSdk = 35

@@ -3,7 +3,6 @@ package com.droidsiege.challenges.webview
 import android.annotation.SuppressLint
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.OutlinedTextField
@@ -134,18 +133,4 @@ fun ChallengeInput(
         singleLine = true,
         modifier = modifier.fillMaxWidth(),
     )
-}
-
-/** Shared console box for challenge output. */
-@Composable
-fun ChallengeConsole(output: String) {
-    if (output.isNotEmpty()) {
-        Text(
-            text = output,
-            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-        )
-    }
-    Box(Modifier.height(1.dp))
 }
