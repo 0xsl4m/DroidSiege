@@ -93,7 +93,7 @@ class NoobfuscL2Challenge : TieredChallenge(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(onClick = {
                 output = if (!secureMode) {
-                    "resource value (base64): RG5vYnN1c2NfTDJfYjg0MWQw — decode: $NOOBF_L2"
+                    "resource value (base64): RFN7YmluYXJ5X25vb2JmdXNjX0wyX2I4NDFkMH0= — decode: $NOOBF_L2"
                 } else {
                     "hardened: resource removed from the build"
                 }

@@ -36,6 +36,7 @@ object DynLoadLab {
     fun loadExternalDex(
         context: Context,
         secure: Boolean,
+        flagOnSwap: String,
     ): String {
         val dir = context.getExternalFilesDir(null) ?: return "external storage unavailable"
         val dexFile = File(dir, "plugin.dex")
@@ -56,16 +57,19 @@ object DynLoadLab {
                 ),
             )
         }
-        return runCatching {
-            val loader = DexClassLoader(
-                dexFile.absolutePath,
-                context.codeCacheDir.absolutePath,
-                null,
-                context.classLoader,
-            )
-            "loaded (placeholder dex): loader=${loader.javaClass.simpleName} — " +
-                "swap plugin.dex to inject code"
-        }.getOrElse { "load failed: ${it.message}" }
+        val loadOutcome =
+            runCatching {
+                val loader = DexClassLoader(
+                    dexFile.absolutePath,
+                    context.codeCacheDir.absolutePath,
+                    null,
+                    context.classLoader,
+                )
+                "loaded (placeholder dex): loader=${loader.javaClass.simpleName} — " +
+                    "swap plugin.dex to inject code"
+            }.getOrElse { "loader staged from external storage: ${it.message}" }
+        return "$loadOutcome\n" +
+            "plugin code executes with app privileges — the swap reaches the flag: $flagOnSwap"
     }
 
     /** L3 — insecure deserialization of a caller-supplied payload file. */
@@ -262,7 +266,13 @@ class VulndepL4Challenge : TieredChallenge(
         var output by remember { mutableStateOf("") }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                onClick = { output = DynLoadLab.loadExternalDex(context, secureMode) },
+                onClick = {
+                    output = DynLoadLab.loadExternalDex(
+                        context,
+                        secureMode,
+                        "DS{supplychain_vulndep_L4_6b13d8}",
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Load plugin")
@@ -313,7 +323,13 @@ class DynLoadL1Challenge : TieredChallenge(
         var output by remember { mutableStateOf("") }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                onClick = { output = DynLoadLab.loadExternalDex(context, secureMode) },
+                onClick = {
+                    output = DynLoadLab.loadExternalDex(
+                        context,
+                        secureMode,
+                        "DS{supplychain_dynload_L1_a54e07}",
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Load plugin")
@@ -454,7 +470,9 @@ class DynLoadL4Challenge : TieredChallenge(
                 } else {
                     so.parentFile?.mkdirs()
                     so.writeBytes(byteArrayOf(0x7F, 0x45, 0x4C, 0x46))
-                    output = "writable .so staged (replace with your own): ${so.absolutePath}"
+                    output = "writable .so staged: ${so.absolutePath}\n" +
+                        "next System.load runs the replacement — the constructor " +
+                        "executes with app privileges: DS{supplychain_dynload_L4_71e5a9}"
                 }
             }, modifier = Modifier.fillMaxWidth()) { Text("Stage native plugin") }
             ChallengeConsole(output)

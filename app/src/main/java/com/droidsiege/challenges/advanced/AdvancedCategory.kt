@@ -20,5 +20,7 @@ object AdvancedCategory : CategoryContributor {
         CustomTabsL1Challenge(),
         NativeL1Challenge(),
         NativeL2Challenge(),
+        NativeL3Challenge(),
+        NativeL4Challenge(),
     )
 }

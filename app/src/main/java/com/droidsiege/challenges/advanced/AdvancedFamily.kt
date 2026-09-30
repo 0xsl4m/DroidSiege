@@ -59,6 +59,15 @@ class StrandhoggL1Challenge : TieredChallenge(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Button(onClick = {
+                output =
+                    if (!secureMode) {
+                        "attacker task reparented this activity and drew the overlay — " +
+                            "harvested recovery entry: DS{advanced_strandhogg_L1_b37f92}"
+                    } else {
+                        "hardened: empty taskAffinity + no reparenting — the phish task cannot attach"
+                    }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Open recovery screen") }
             ChallengeConsole(output)
         }
     }
