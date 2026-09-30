@@ -13,7 +13,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.droidsiege.challenges.common.BackendProbeButton
 import com.droidsiege.challenges.common.TieredChallenge
+import com.droidsiege.challenges.common.backendGet
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
 
@@ -130,6 +132,17 @@ class SessionL2Challenge : TieredChallenge(
                     }
             }
             AuthConsole(output)
+            BackendProbeButton(
+                label = "Send an alg:none forge to the lab backend's verifier",
+                request = { base ->
+                    val forged = JwtCodec.encode(
+                        header = mapOf("alg" to "none", "typ" to "JWT"),
+                        payload = mapOf("role" to "admin"),
+                        hmacKey = null,
+                    )
+                    backendGet("$base/api/auth/jwt/verify?token=$forged")
+                },
+            )
         }
     }
 }

@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "DroidSiege"
 
 include(":app")
+include(":backend")

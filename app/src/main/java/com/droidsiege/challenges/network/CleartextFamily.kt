@@ -1,9 +1,12 @@
 package com.droidsiege.challenges.network
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.droidsiege.challenges.common.ActionChallengeScreen
+import com.droidsiege.challenges.common.BackendProbeButton
 import com.droidsiege.challenges.common.KitAction
 import com.droidsiege.challenges.common.TieredChallenge
+import com.droidsiege.challenges.common.backendGet
 import com.droidsiege.core.Difficulty
 import com.droidsiege.core.LearnContent
 import okhttp3.OkHttpClient
@@ -55,26 +58,36 @@ class CleartextL1Challenge : TieredChallenge(
     @Composable
     override fun Screen(secureMode: Boolean) {
         androidx.compose.runtime.LaunchedEffect(Unit) { MockBackend.clearLog() }
-        ActionChallengeScreen(
-            secureMode = secureMode,
-            note = "Fetches the session recovery from the local endpoint.",
-            actions = listOf(
-                KitAction("Fetch recovery (watch the wire)") { _, secure ->
-                    MockBackend.ensureStarted()
-                    if (!secure) {
-                        exchange(
-                            MockBackend.plainClient(),
-                            "http://127.0.0.1:${MockBackend.plainPort}/clear/L1",
-                        )
-                    } else {
-                        failedExchange(
-                            "http://127.0.0.1:${MockBackend.plainPort}/clear/L1",
-                            "blocked: cleartextTrafficPermitted=false; call moved to TLS",
-                        )
-                    }
+        androidx.compose.foundation.layout.Column(
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+        ) {
+            ActionChallengeScreen(
+                secureMode = secureMode,
+                note = "Fetches the session recovery from the local endpoint.",
+                actions = listOf(
+                    KitAction("Fetch recovery (watch the wire)") { _, secure ->
+                        MockBackend.ensureStarted()
+                        if (!secure) {
+                            exchange(
+                                MockBackend.plainClient(),
+                                "http://127.0.0.1:${MockBackend.plainPort}/clear/L1",
+                            )
+                        } else {
+                            failedExchange(
+                                "http://127.0.0.1:${MockBackend.plainPort}/clear/L1",
+                                "blocked: cleartextTrafficPermitted=false; call moved to TLS",
+                            )
+                        }
+                    },
+                ),
+            )
+            BackendProbeButton(
+                label = "Fetch /health from the real lab backend (plain HTTP)",
+                request = { base ->
+                    backendGet("$base/health")
                 },
-            ),
-        )
+            )
+        }
     }
 }
 

@@ -1,0 +1,12 @@
+# DroidSiege lab backend. Local/educational use ONLY — the vulnerable profile
+# is the intended default for solving the challenges. `docker compose up --build`
+# serves http://localhost:8080 (use http://10.0.2.2:8080 from the emulator).
+# Flip SECURE_MODE to "on" to verify every family's hardened behavior.
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SECURE_MODE: "off"
+      PORT: "8080"

@@ -89,16 +89,31 @@ cd DroidSiege
 ./gradlew :app:assembleDebug
 ```
 
-### The backend (for server-side challenges)
+### The lab backend (for server-side challenges)
+
+DroidSiege ships a small Ktor backend (`:backend`) hosting the server-side
+vulnerability families (IDOR/BOLA, broken authentication, mass assignment —
+four escalation tiers each). It is a **local lab only**: never deploy it
+anywhere public, and never point it at data you care about.
 
 ```bash
-cd backend
+# from the repository root (Dockerfile + docker-compose.yml live here)
 docker compose up --build
-# API listens on http://localhost:8080
+# API listens on http://localhost:8080 — health: GET /health
 ```
 
+No Docker? `./gradlew :backend:installDist` and run
+`backend/build/install/backend/bin/backend`.
+
 Point the app at your host with the in-app **Settings → Backend URL** field
-(default `http://10.0.2.2:8080` for the Android emulator).
+(default `http://10.0.2.2:8080` for the Android emulator). The backend's
+`SECURE_MODE` environment variable mirrors the app's Secure/Insecure toggle:
+`off` (default) serves the vulnerable behaviors, `on` enforces the hardened
+variants of every family — flip it to verify the fixes:
+
+```bash
+SECURE_MODE=on docker compose up --build
+```
 
 ---
 
