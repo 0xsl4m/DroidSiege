@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Press Copy in insecure mode, then `adb shell service call clipboard …` — or simply paste somewhere / read the in-app echo.
 2. The clipboard is system-global: the value is exposed.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_clipboard_L1_5e8b24}`
 
 **Fix:** Never place secrets on the clipboard; offer in-app reveal with auto-expiry instead.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Copy, then read the clipboard within the window (any background app can).
 2. A window is not a lock — the exposure is the design.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_clipboard_L2_c7f190}`
 
 **Fix:** No secret copies; or FLAG_SECURE-style sensitive views + immediate clear on background.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Press Copy and read the toast / the clipboard preview in the challenge console.
 2. Half a secret in a system surface is half published.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_clipboard_L3_32ad65}`
 
 **Fix:** UI surfaces (toasts, previews, recents) must never carry secret fragments.
 
@@ -56,7 +56,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Copy, paste, then read the audit log via run-as.
 2. The audit trail captured the value it was auditing.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_clipboard_L4_b94e08}`
 
 **Fix:** Audit logs record events, never payloads.
 

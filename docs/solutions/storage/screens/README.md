@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Open the challenge (insecure mode), take a screenshot (`adb shell screencap`).
 2. The flag is on the image.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_screens_L1_6f3d81}`
 
 **Fix:** Set `FLAG_SECURE` on sensitive screens.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Open the screen, then list the task thumbnails via run-as / system recents.
 2. The thumbnail shows the secret.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_screens_L2_a2c954}`
 
 **Fix:** Clear the activity's content in `onPause` or set FLAG_SECURE so the snapshot is blanked.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Screenshot while the blur is visible: the underlying text is in the bitmap.
 2. Overlays are view-level; capture happens at the surface level.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_screens_L3_70e417}`
 
 **Fix:** Surface-level protection (FLAG_SECURE), not view-level overlays.
 
@@ -56,7 +56,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Trigger the share flow and pull the generated preview file.
 2. The preview generator ignored the flag-secure path.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_screens_L4_f8b6d3}`
 
 **Fix:** Every rendering path of a secret screen must respect the same protection.
 

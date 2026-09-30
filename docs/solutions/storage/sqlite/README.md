@@ -21,7 +21,7 @@ Secure/Insecure toggle in the app switches between them.
 2. `adb shell run-as com.droidsiege sqlite3 databases/siege.db 'select * from sessions;'`.
 3. The token column holds the flag.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_sqlite_L1_4d7b90}`
 
 **Fix:** Encrypt sensitive columns with a Keystore key, or keep the data server-side.
 
@@ -34,7 +34,7 @@ Secure/Insecure toggle in the app switches between them.
 2. The bundled sqlite tool re-derives the XOR key from the app constant and decodes.
 3. Static-key XOR is decodable by anyone with the APK.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_sqlite_L2_2a5e17}`
 
 **Fix:** Authenticated encryption (AES/GCM) with a non-exportable key.
 
@@ -47,7 +47,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Read the key from prefs, decrypt the column with the bundled tool.
 3. Co-located key + ciphertext is one `run-as` away from plaintext.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_sqlite_L3_c8f346}`
 
 **Fix:** AndroidKeyStore-generated key; never persist the key beside the data it protects.
 
@@ -60,7 +60,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Pull `databases/siege.db-wal` and strings/grep it (or use the bundled tool).
 3. The 'deleted' flag value is still in the write-ahead log.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_sqlite_L4_09b7d2}`
 
 **Fix:** Use `PRAGMA wal_checkpoint(TRUNCATE)` / secure deletion, or never write secrets at all.
 

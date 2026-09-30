@@ -9,7 +9,7 @@
 
 The notes ContentProvider is exported without a read permission and builds its SQL from string concatenation; its openFile also accepts traversal-ish projections.
 
-**Vulnerable code:** `challenges/components/ProviderLab.kt` — every screen ships both paths; the
+**Vulnerable code:** `challenges/components/ProviderChallenges.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Open Vault

@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. `adb backup -noapk com.droidsiege` (or the bundled script), then `dd bs=24 skip=1 | tar xvf -`.
 2. The prefs/DB files in the archive carry the flag.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_backup_L1_8c45f2}`
 
 **Fix:** allowBackup=false, or rules that exclude secret files.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Run the backup and inspect the extracted tree.
 2. The excluded path was a decoy; the real secret file is included.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_backup_L2_10e7b6}`
 
 **Fix:** Deny-by-default backup rules; enumerate every file the app writes.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Trigger the export-activity in the challenge, pull the bundle.
 2. Transfer flows bypass the classic backup exclusion lists.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_backup_L3_d29a3f}`
 
 **Fix:** Exclude transfer bundles too; treat every export path as a backup path.
 
@@ -56,7 +56,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Extract the archive; read the wrapped key stored beside the data.
 2. Unwrap and decrypt — the restore path is self-contained for the attacker.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_backup_L4_47c610}`
 
 **Fix:** Wrap restore data with a Keystore key that never leaves the device (and is not upgradable).
 

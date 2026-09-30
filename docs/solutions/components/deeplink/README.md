@@ -9,7 +9,7 @@
 
 The recovery screen exposes `droidsiege://` deep links whose parameters flow into display, WebView URL and local logic with no validation.
 
-**Vulnerable code:** `AndroidManifest.xml (intent filters) + challenges/components/DeepLinkLab.kt` — every screen ships both paths; the
+**Vulnerable code:** `AndroidManifest.xml (intent filters) + challenges/components/DeepLinkChallenges.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Recover Link

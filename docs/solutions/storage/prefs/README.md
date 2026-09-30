@@ -21,7 +21,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Dump the file: `adb shell run-as com.droidsiege cat shared_prefs/siege_wallet_prefs.xml`.
 3. The flag is the plaintext `<string>` value.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_prefs_L1_3f9a2c}`
 
 **Fix:** Never store secrets in prefs — keep server-side, or use the Keystore-backed EncryptedSharedPreferences / DataStore.
 
@@ -34,7 +34,7 @@ Secure/Insecure toggle in the app switches between them.
 2. `echo <value> | base64 -d` (or the bundled decrypt_prefs.py helper decodes it).
 3. Encoding is not encryption — the flag falls straight out.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_prefs_L2_71c4e8}`
 
 **Fix:** Real authenticated encryption with a non-exportable Keystore key, or no secret on the device at all.
 
@@ -47,7 +47,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Decrypt the stored blob with the bundled decrypt_prefs.py (it mirrors the app derivation).
 3. GCM without confidentiality of the key is just obfuscation.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_prefs_L3_b6d21a}`
 
 **Fix:** Generate the key inside AndroidKeyStore (`setRandomizedEncryptionRequired(true)`) so it never exists in code.
 
@@ -60,7 +60,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Concatenate and decrypt the GCM blob with decrypt_prefs.py.
 3. Splitting a secret across client locations is storage, not protection.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_prefs_L4_8e0f43}`
 
 **Fix:** Server-held escrow: the client should never possess every share.
 

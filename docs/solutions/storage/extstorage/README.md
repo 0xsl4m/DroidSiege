@@ -9,7 +9,7 @@
 
 The export feature writes receipts to app-external storage (`getExternalFilesDir`), world-readable to anything with the same storage access, and survives the app.
 
-**Vulnerable code:** `challenges/storage/ExtstorageFamily.kt` — every screen ships both paths; the
+**Vulnerable code:** `challenges/storage/ExtStorageFamily.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Receipt Export
@@ -21,7 +21,7 @@ Secure/Insecure toggle in the app switches between them.
 2. `adb shell cat /sdcard/Android/data/com.droidsiege/files/receipt.txt`.
 3. The flag is in the file body.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_extstorage_L1_6c2e85}`
 
 **Fix:** Keep exports inside internal storage, or encrypt before writing.
 
@@ -33,7 +33,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Export, pull the file, and apply the reverse rotation (bundled tool does it).
 2. The rotation constant ships in the APK.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_extstorage_L2_f43a09}`
 
 **Fix:** Real encryption before any external write — or no external writes.
 
@@ -45,7 +45,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Export twice; read the appended tail of the shared file.
 2. Any co-installed reader (or `adb shell cat`) sees the tail.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_extstorage_L3_91d6b3}`
 
 **Fix:** App-private files only; shared storage gets encrypted, name-mangled data or nothing.
 
@@ -58,7 +58,7 @@ Secure/Insecure toggle in the app switches between them.
 2. The derivation (documented in the file header) turns it into the AES key.
 3. Device identifiers are readable by the same attacker who reads the file.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_extstorage_L4_57ae20}`
 
 **Fix:** Keys from AndroidKeyStore — bound to the keystore hardware, not to guessable identifiers.
 

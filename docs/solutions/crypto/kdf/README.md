@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Capture the on-screen verifier blob; run the bundled brute-forcer over 0000-9999.
 2. The PIN (and therefore the key) falls out in seconds.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{crypto_kdf_L1_93e60c}`
 
 **Fix:** High-entropy secrets or PBKDF2/Argon2 with real parameters; rate-limit attempts.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Extract salt + verifier from the challenge console.
 2. The bundled tool runs the dictionary with the documented parameters.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{crypto_kdf_L2_48a2f5}`
 
 **Fix:** ≥ hundreds of thousands of iterations (or memory-hard Argon2), plus attempt throttling.
 
@@ -45,7 +45,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Precompute/rainbow-table the small PIN space with the known salt (bundled tool).
 3. Guessable salts allow precomputation.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{crypto_kdf_L3_f1c74b}`
 
 **Fix:** Random per-install salt from SecureRandom.
 
@@ -58,7 +58,7 @@ Secure/Insecure toggle in the app switches between them.
 2. The verifier accepts 1-iteration derivation — the bundled tool forges a matching verifier.
 3. Crypto parameters chosen by the caller are chosen by the attacker.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{crypto_kdf_L4_5d09e3}`
 
 **Fix:** Server- or keystore-pinned parameters; client input never tunes KDF cost.
 

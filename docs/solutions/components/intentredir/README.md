@@ -9,7 +9,7 @@
 
 The proxy activity forwards attacker extras to privileged internal components (intent redirection), and a PendingIntent is built mutable & implicit.
 
-**Vulnerable code:** `challenges/components/IntentRedirLab.kt` — every screen ships both paths; the
+**Vulnerable code:** `challenges/components/IntentRedirChallenges.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Blind Forward

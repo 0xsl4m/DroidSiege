@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Capture the ciphertext (the console shows the bytes).
 2. Repeating-key XOR analysis (bundled tool) recovers the key from known plaintext structure.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{crypto_homegrown_L1_b74d02}`
 
 **Fix:** Use AES/GCM; never hand-roll ciphers.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Flip ciphertext bytes; the CRC delta is computable without the key (bundled tool).
 2. The verifier accepts the tampered message: malleability proven.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{crypto_homegrown_L2_61f3a8}`
 
 **Fix:** HMAC-SHA256 or GCM's built-in tag.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. XOR two ciphertexts captured from the repeated action (bundled tool).
 2. Keystream reuse leaks the plaintext XOR — both messages fall.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{crypto_homegrown_L3_ce5914}`
 
 **Fix:** Unique nonce per message (GCM handles this correctly).
 
@@ -57,7 +57,7 @@ Secure/Insecure toggle in the app switches between them.
 2. The app accepts the forged command and prints the flag.
 3. Unauthenticated encryption is a forgery kit.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{crypto_homegrown_L4_27d8b6}`
 
 **Fix:** AEAD (GCM) — encryption and authenticity in one primitive.
 

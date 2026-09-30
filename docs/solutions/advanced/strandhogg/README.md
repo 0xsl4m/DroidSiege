@@ -18,7 +18,7 @@ Secure/Insecure toggle in the app switches between them.
 
 **Exploit:**
 1. Press 'Open recovery screen' (insecure mode): the simulated attacker task reparents and overlays the screen, harvesting the recovery entry.
-2. A companion PoC app (see Phase 5 notes) does the real-world version from a second app.
+2. The `:attacker` Siegeraider app and tools/strandhogg_poc.md carry the real-world PoC recipe from a second app.
 
 **Flag:** `DS{advanced_strandhogg_L1_b37f92}`
 
@@ -26,7 +26,7 @@ Secure/Insecure toggle in the app switches between them.
 
 ## Tooling
 
-- [`tools/strandhogg_poc.md`](tools/strandhogg_poc.md) — the companion attacker-app PoC recipe (task shape + overlay flow).
+- [`tools/strandhogg_poc.md`](tools/strandhogg_poc.md) — the SiegeRaider (`:attacker`) PoC recipe: task shape, overlay flow, adb verification.
 
 ## Vulnerable vs hardened
 

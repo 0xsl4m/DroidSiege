@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Read the timestamp the console prints for the mint action.
 2. The bundled tool re-seeds Random over a ±window and reproduces the token.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{crypto_random_L1_6b41f8}`
 
 **Fix:** java.security.SecureRandom, unseeded by the developer.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Capture two tokens and their (visible) mint seconds.
 2. Brute the small seed space per the bundled tool.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{crypto_random_L2_a7d325}`
 
 **Fix:** SecureRandom for every security decision.
 
@@ -45,7 +45,7 @@ Secure/Insecure toggle in the app switches between them.
 2. The bundled tool regenerates the whole token stream offline.
 3. Seeding SecureRandom replaces its entropy, it doesn't add.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{crypto_random_L3_c0e892}`
 
 **Fix:** Never call setSeed on SecureRandom; trust the platform entropy.
 
@@ -58,7 +58,7 @@ Secure/Insecure toggle in the app switches between them.
 2. State-recover the shared generator (bundled tool) and predict the next security output.
 3. One generator for cosmetics and crypto leaks state across the boundary.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{crypto_random_L4_34f67a}`
 
 **Fix:** Separate, dedicated SecureRandom instances for security outputs.
 

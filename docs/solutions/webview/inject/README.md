@@ -9,7 +9,7 @@
 
 A debug-only evaluateJavascript path feeds user text straight into the JS context — arbitrary script execution inside the app's WebView.
 
-**Vulnerable code:** `challenges/webview/InjectLab.kt` — every screen ships both paths; the
+**Vulnerable code:** `challenges/webview/InjectFamily.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Notes Search

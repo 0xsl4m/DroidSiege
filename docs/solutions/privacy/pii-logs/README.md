@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. `adb logcat -s SiegePii` while pressing the track action.
 2. The email — and the recovery record — appear in the log.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{privacy_pii-logs_L1_4e9c28}`
 
 **Fix:** Log identifiers only; strip PII at the logging layer.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Same capture; the coords are in the JSON payload.
 2. Location is PII — logged in plaintext.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{privacy_pii-logs_L2_7b31d5}`
 
 **Fix:** Coarsen or drop location; never log it.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Take any known email, compute md5 (bundled tool), match the logged id.
 2. Re-identification is one hash away.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{privacy_pii-logs_L3_a08f42}`
 
 **Fix:** Random per-install opaque ids; salted, keyed hashes at minimum.
 
@@ -56,7 +56,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Trigger flush and read the loopback capture (or the in-app console echo).
 2. The full PII file leaves the app.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{privacy_pii-logs_L4_6d24b9}`
 
 **Fix:** Data minimization at the source: the file should never contain PII.
 

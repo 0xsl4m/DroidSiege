@@ -9,7 +9,7 @@
 
 The vault feature encrypts with keys embedded in the binary or resources — `jadx` reads them in seconds, and every install shares the same key.
 
-**Vulnerable code:** `challenges/crypto/HardcodedFamily.kt` — every screen ships both paths; the
+**Vulnerable code:** `challenges/crypto/HardcodedKeyFamily.kt` — every screen ships both paths; the
 Secure/Insecure toggle in the app switches between them.
 
 ## L1 🟢 — Static License
@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Open jadx, search for the vault key constant (the challenge hints name it).
 2. Decrypt the on-screen ciphertext with the bundled tool using that key.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{crypto_hardcoded_L1_41f7c2}`
 
 **Fix:** Keys from AndroidKeyStore; nothing secret in code or resources.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Decompile resources (`apktool d`), reassemble the parts per the bundled tool.
 2. Same key as L1 — just scattered.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{crypto_hardcoded_L2_9d3a58}`
 
 **Fix:** Same: Keystore-generated keys; assembly logic in code is still publication.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Read both constants in smali/jadx; XOR them (bundled tool).
 2. Static splitting is arithmetic, not secrecy.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{crypto_hardcoded_L3_e6b824}`
 
 **Fix:** Keystore keys never exist as material the attacker can read.
 
@@ -57,7 +57,7 @@ Secure/Insecure toggle in the app switches between them.
 2. Feed it through the derivation in the bundled tool and decrypt.
 3. Deriving from public inputs yields public keys.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{crypto_hardcoded_L4_15c7f9}`
 
 **Fix:** Keystore with setUserAuthenticationRequired where needed; derivations need a secret only the keystore holds.
 

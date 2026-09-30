@@ -74,9 +74,11 @@ the Challenges hub (grouped by OWASP category with difficulty tiers).
 | M9 | Insecure Data Storage | 28 (prefs, sqlite, extstorage, logs, clipboard, screens, backup) | [prefs](docs/solutions/storage/prefs) · [sqlite](docs/solutions/storage/sqlite) · [extstorage](docs/solutions/storage/extstorage) · [logs](docs/solutions/storage/logs) · [clipboard](docs/solutions/storage/clipboard) · [screens](docs/solutions/storage/screens) · [backup](docs/solutions/storage/backup) |
 | M10 | Insufficient Cryptography | 20 (hardcoded, ecbiv, kdf, random, homegrown) | [hardcoded](docs/solutions/crypto/hardcoded) · [ecbiv](docs/solutions/crypto/ecbiv) · [kdf](docs/solutions/crypto/kdf) · [random](docs/solutions/crypto/random) · [homegrown](docs/solutions/crypto/homegrown) |
 
-**150 in-app challenges** (37 categories/families × graded tiers + the onboarding demo) plus
-**12 server-side tiers** on the lab backend — every one with vulnerable **and** hardened
-paths, hints, and a full write-up with a verified tooling pack.
+**150 in-app challenges** — 40 families across 11 categories (most run four graded
+tiers; the binary detection families ship three and the modern-attack families one or
+two — escalation follows the real attack, not a fixed ladder), plus the onboarding demo —
+and **12 server-side tiers** on the lab backend. Every challenge carries vulnerable **and**
+hardened paths, hints, and a full write-up with a verified tooling pack.
 
 See the full challenge catalog and the level design in [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 
@@ -142,12 +144,13 @@ Stuck? Each challenge has tiered **hints** (they cost points). Full write-ups li
 
 ## 🗺️ Roadmap
 
-- [x] Phase 0 — Foundation, docs, CI
-- [ ] Phase 1 — CTF engine, scoreboard, navigation shell
-- [ ] Phase 2 — Core categories (Storage, Crypto, Components, Network) L1–L2
-- [ ] Phase 3 — Advanced tiers L3–L4 (pinning bypass, root/Frida detection, native/JNI, WebView bridges)
-- [ ] Phase 4 — Insecure backend (IDOR/BOLA, broken auth)
-- [ ] Phase 5 — Solutions guide, GitHub Pages docs, release APK
+- [x] Engine & shell — CTF scoring, hints, Secure/Insecure toggle, Learn tab
+- [x] OWASP Mobile Top 10 coverage — storage, crypto, components, network, WebView, auth (all four tiers per family)
+- [x] Privacy, binary-protection and supply-chain families + native JNI library
+- [x] Insecure Ktor backend (BOLA, broken auth, mass assignment) + Docker packaging
+- [x] Solution write-ups + verified tooling packs for every family
+- [x] SiegeRaider attacker lab app + v1.0.0 release
+- [ ] v1.1 — GIF walkthroughs, ordered-broadcast capture cards in SiegeRaider, more server-side families
 
 ---
 

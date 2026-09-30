@@ -20,7 +20,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Start `adb logcat -s SiegeLogs` and press the track action (insecure mode).
 2. The flag appears in the log line.
 
-**Flag:** `DS{crypto_ecbiv_L1_7a2e46}`
+**Flag:** `DS{storage_logs_L1_d81f6c}`
 
 **Fix:** Strip secret logging in release; use a logging facade that redacts by default.
 
@@ -32,7 +32,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Capture the logged blob; apply the inverse transform from the bundled tool.
 2. The transform is bijective — it hides nothing.
 
-**Flag:** `DS{crypto_ecbiv_L2_d5f981}`
+**Flag:** `DS{storage_logs_L2_e54c81}`
 
 **Fix:** Log only non-sensitive identifiers; drop the payload entirely.
 
@@ -44,7 +44,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Capture the JSON log; read the field that claims to be masked.
 2. The mask function only replaces a middle slice — the flag survives at the edges.
 
-**Flag:** `DS{crypto_ecbiv_L3_38c1b7}`
+**Flag:** `DS{storage_logs_L3_27f0b8}`
 
 **Fix:** Redact by allowlist: log structs where secret fields simply do not exist.
 
@@ -56,7 +56,7 @@ Secure/Insecure toggle in the app switches between them.
 1. Trigger several track actions, then read the rotated file via run-as.
 2. Every 'temporary' debug line is persisted — including the flag.
 
-**Flag:** `DS{crypto_ecbiv_L4_82ea6f}`
+**Flag:** `DS{storage_logs_L4_6a13d9}`
 
 **Fix:** No file-backed debug logging in release builds; nothing sensitive in any sink.
 
