@@ -13,6 +13,7 @@ data class User(
     var fullname: String,
     var isPremium: Boolean,
     var flagAccess: Boolean,
+    var vaultSync: Boolean,
     var note: String,
 )
 
@@ -31,9 +32,11 @@ data class Item(
 
 /**
  * In-memory seed store. The only "secrets" present are the intended challenge
- * flags; everything else is lab data. Every account starts unprivileged so the
- * mass-assignment flags are reachable only through the actual exploit. [reset]
- * restores the pristine seed so tests (and repeated lab runs) start known.
+ * flags; everything else is lab data. Every loginable account starts
+ * unprivileged, and every flag sits on an object whose owner either cannot log
+ * in (the `system` account, role-gated out of /api/auth/login) or is reachable
+ * only through the family's exploit — so hardened mode leaves no flag
+ * reachable. [reset] restores the pristine seed so tests start known.
  */
 object Store {
     // --- idor flags -------------------------------------------------------
@@ -57,8 +60,15 @@ object Store {
     const val WEAK_JWT_SECRET = "secret"
     const val STRONG_JWT_SECRET = "droidsiege-hardened-lab-key-4f9a2c7e1b8d5306"
 
-    /** vault id -> owning user id; the L2 vault's hid encodes id 7 (alice's). */
-    const val VAULT_L2_ID = 7
+    /**
+     * The BOLA victim: a `system` account whose password is never disclosed and
+     * which /api/auth/login refuses in both modes. The idor L1/L2/L4 flags live
+     * on its objects, so the only access path is the exploit itself.
+     */
+    const val SYSTEM_USER_ID = 5
+    const val SYSTEM_ORDER_ID = 103
+    const val SYSTEM_ITEM_ID = 503
+    const val SYSTEM_VAULT_ID = 7
 
     val users = LinkedHashMap<Int, User>()
     val orders = LinkedHashMap<Int, Order>()
@@ -78,10 +88,11 @@ object Store {
                 username = "alice",
                 password = "hunter2",
                 role = "user",
-                secret = IDOR_L1,
+                secret = "internal record 1",
                 fullname = "Alice Lab",
                 isPremium = false,
                 flagAccess = false,
+                vaultSync = false,
                 note = "alice note v1",
             )
             users[2] = User(
@@ -89,10 +100,11 @@ object Store {
                 username = "bob",
                 password = "password1",
                 role = "user",
-                secret = IDOR_L1,
+                secret = "internal record 2",
                 fullname = "Bob Lab",
                 isPremium = false,
                 flagAccess = false,
+                vaultSync = false,
                 note = "bob note v1",
             )
             users[3] = User(
@@ -100,21 +112,35 @@ object Store {
                 username = "carol",
                 password = "correct-horse",
                 role = "user",
-                secret = IDOR_L1,
+                secret = "internal record 3",
                 fullname = "Carol Lab",
                 isPremium = false,
                 flagAccess = false,
+                vaultSync = false,
                 note = "carol note v1",
+            )
+            users[SYSTEM_USER_ID] = User(
+                id = SYSTEM_USER_ID,
+                username = "vaultkeeper",
+                password = "b7f3e9a1c2d84f6e0a5d3c8b1e7f4a2c",
+                role = "system",
+                secret = IDOR_L1,
+                fullname = "Records Vault",
+                isPremium = false,
+                flagAccess = false,
+                vaultSync = false,
+                note = "keeper note v1",
             )
             users[9] = User(
                 id = 9,
                 username = "svcadmin",
                 password = "123456",
                 role = "admin",
-                secret = IDOR_L1,
+                secret = "internal record 9",
                 fullname = "Service Admin",
                 isPremium = false,
                 flagAccess = false,
+                vaultSync = false,
                 note = "svcadmin note v1",
             )
         }
@@ -122,11 +148,18 @@ object Store {
             orders.clear()
             orders[101] = Order(101, ownerId = 1, manifest = "alice order")
             orders[102] = Order(102, ownerId = 2, manifest = "bob order")
+            orders[SYSTEM_ORDER_ID] = Order(SYSTEM_ORDER_ID, ownerId = SYSTEM_USER_ID, manifest = "keeper escrow")
         }
         synchronized(items) {
             items.clear()
             items[501] = Item(501, orderId = 101, label = "alice widget", flag = "item-alice-ok")
-            items[502] = Item(502, orderId = 102, label = "bob escrow", flag = IDOR_L4)
+            items[502] = Item(502, orderId = 102, label = "bob widget", flag = "item-bob-ok")
+            items[SYSTEM_ITEM_ID] = Item(
+                SYSTEM_ITEM_ID,
+                orderId = SYSTEM_ORDER_ID,
+                label = "keeper escrow",
+                flag = IDOR_L4,
+            )
         }
         sessions.clear()
         loginFails.clear()
@@ -167,9 +200,19 @@ object Store {
         }
     }
 
-    fun vaultOwner(vaultId: Int): Int = if (vaultId == VAULT_L2_ID) 1 else 0
+    fun vaultOwner(vaultId: Int): Int? =
+        when (vaultId) {
+            SYSTEM_VAULT_ID -> SYSTEM_USER_ID
+            1 -> 1
+            else -> null
+        }
 
-    fun vaultContents(vaultId: Int): String? = if (vaultId == VAULT_L2_ID) IDOR_L2 else null
+    fun vaultContents(vaultId: Int): String? =
+        when (vaultId) {
+            SYSTEM_VAULT_ID -> IDOR_L2
+            1 -> "team standup notes"
+            else -> null
+        }
 
     /** L4 vuln reset token: deterministic md5(username + fixed salt), no expiry. */
     fun legacyResetToken(username: String): String {

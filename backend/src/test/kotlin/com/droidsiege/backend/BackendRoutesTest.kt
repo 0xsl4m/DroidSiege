@@ -76,24 +76,38 @@ class BackendRoutesTest {
     fun `idor L1 vuln - any user id returns its secret`() =
         withApp { client ->
             val token = login(client, "alice", "hunter2")
-            val response = client.get("/api/users/2/secret") { header(HttpHeaders.Authorization, "Bearer $token") }
+            val response = client.get("/api/users/${Store.SYSTEM_USER_ID}/secret") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
             assertThat(response.status).isEqualTo(HttpStatusCode.OK)
             assertThat(response.bodyAsText()).contains(Store.IDOR_L1)
         }
 
     @Test
-    fun `idor L1 hardened - other user's secret is forbidden, own is allowed`() =
+    fun `idor L1 hardened - victim secret unreachable, own secret benign`() =
         withApp { client ->
             SecureMode.enabled = true
             val alice = login(client, "alice", "hunter2")
-            val bob = login(client, "bob", "password1")
-            val foreign = client.get("/api/users/2/secret") { header(HttpHeaders.Authorization, "Bearer $alice") }
-            assertThat(foreign.status).isEqualTo(HttpStatusCode.Forbidden)
-            val own = client.get("/api/users/1/secret") { header(HttpHeaders.Authorization, "Bearer $bob") }
-            assertThat(own.status).isEqualTo(HttpStatusCode.Forbidden)
+            val victim = client.get("/api/users/${Store.SYSTEM_USER_ID}/secret") {
+                header(HttpHeaders.Authorization, "Bearer $alice")
+            }
+            assertThat(victim.status).isEqualTo(HttpStatusCode.Forbidden)
+            assertThat(victim.bodyAsText()).doesNotContain(Store.IDOR_L1)
             val aliceOwn = client.get("/api/users/1/secret") { header(HttpHeaders.Authorization, "Bearer $alice") }
             assertThat(aliceOwn.status).isEqualTo(HttpStatusCode.OK)
-            assertThat(aliceOwn.bodyAsText()).contains(Store.IDOR_L1)
+            assertThat(aliceOwn.bodyAsText()).doesNotContain(Store.IDOR_L1)
+        }
+
+    @Test
+    fun `system account cannot log in - the bola victim has no usable credentials`() =
+        withApp { client ->
+            val response = client.post("/api/auth/login") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    """{"username":"vaultkeeper","password":"b7f3e9a1c2d84f6e0a5d3c8b1e7f4a2c"}""",
+                )
+            }
+            assertThat(response.status).isEqualTo(HttpStatusCode.Forbidden)
         }
 
     // --- idor L2 -----------------------------------------------------------
@@ -101,25 +115,29 @@ class BackendRoutesTest {
     @Test
     fun `idor L2 vuln - enumerated hid opens the vault`() =
         withApp { client ->
-            val hid = Store.hidFor(Store.VAULT_L2_ID)
+            val hid = Store.hidFor(Store.SYSTEM_VAULT_ID)
             val response = client.get("/api/vaults/$hid")
             assertThat(response.status).isEqualTo(HttpStatusCode.OK)
             assertThat(response.bodyAsText()).contains(Store.IDOR_L2)
         }
 
     @Test
-    fun `idor L2 hardened - vault requires its owner`() =
+    fun `idor L2 hardened - flagged vault unreachable, own vault benign`() =
         withApp { client ->
             SecureMode.enabled = true
-            val hid = Store.hidFor(Store.VAULT_L2_ID)
+            val hid = Store.hidFor(Store.SYSTEM_VAULT_ID)
             val bob = login(client, "bob", "password1")
-            val bobToken = "Bearer $bob"
-            val denied = client.get("/api/vaults/$hid") { header(HttpHeaders.Authorization, bobToken) }
-            assertThat(denied.status).isEqualTo(HttpStatusCode.Forbidden)
+            val deniedBob = client.get("/api/vaults/$hid") { header(HttpHeaders.Authorization, "Bearer $bob") }
+            assertThat(deniedBob.status).isEqualTo(HttpStatusCode.Forbidden)
             val alice = login(client, "alice", "hunter2")
-            val allowed = client.get("/api/vaults/$hid") { header(HttpHeaders.Authorization, "Bearer $alice") }
-            assertThat(allowed.status).isEqualTo(HttpStatusCode.OK)
-            assertThat(allowed.bodyAsText()).contains(Store.IDOR_L2)
+            val deniedAlice = client.get("/api/vaults/$hid") { header(HttpHeaders.Authorization, "Bearer $alice") }
+            assertThat(deniedAlice.status).isEqualTo(HttpStatusCode.Forbidden)
+            assertThat(deniedAlice.bodyAsText()).doesNotContain(Store.IDOR_L2)
+            val own = client.get("/api/vaults/${Store.hidFor(1)}") {
+                header(HttpHeaders.Authorization, "Bearer $alice")
+            }
+            assertThat(own.status).isEqualTo(HttpStatusCode.OK)
+            assertThat(own.bodyAsText()).doesNotContain(Store.IDOR_L2)
         }
 
     // --- idor L3 -----------------------------------------------------------
@@ -159,7 +177,7 @@ class BackendRoutesTest {
     fun `idor L4 vuln - nested path serves an item from another order`() =
         withApp { client ->
             val alice = login(client, "alice", "hunter2")
-            val response = client.get("/api/orders/101/items/502") {
+            val response = client.get("/api/orders/101/items/${Store.SYSTEM_ITEM_ID}") {
                 header(HttpHeaders.Authorization, "Bearer $alice")
             }
             assertThat(response.status).isEqualTo(HttpStatusCode.OK)
@@ -171,7 +189,7 @@ class BackendRoutesTest {
         withApp { client ->
             SecureMode.enabled = true
             val alice = login(client, "alice", "hunter2")
-            val crossOrder = client.get("/api/orders/101/items/502") {
+            val crossOrder = client.get("/api/orders/101/items/${Store.SYSTEM_ITEM_ID}") {
                 header(HttpHeaders.Authorization, "Bearer $alice")
             }
             assertThat(crossOrder.status).isEqualTo(HttpStatusCode.Forbidden)
@@ -382,6 +400,8 @@ class BackendRoutesTest {
             }
             val profile = client.get("/api/profile") { header(HttpHeaders.Authorization, "Bearer $alice") }
             assertThat(profile.bodyAsText()).contains(Store.MASSASSIGN_L2)
+            val account = client.get("/api/account") { header(HttpHeaders.Authorization, "Bearer $alice") }
+            assertThat(account.bodyAsText()).doesNotContain(Store.MASSASSIGN_L3)
         }
 
     @Test
@@ -401,16 +421,18 @@ class BackendRoutesTest {
     // --- massassign L3 -----------------------------------------------------
 
     @Test
-    fun `massassign L3 vuln - nested prefs object binds flagAccess`() =
+    fun `massassign L3 vuln - nested prefs object binds vaultSync`() =
         withApp { client ->
             val alice = login(client, "alice", "hunter2")
             val account = client.post("/api/account") {
                 header(HttpHeaders.Authorization, "Bearer $alice")
                 contentType(ContentType.Application.Json)
-                setBody("""{"fullname":"Alice Lab","prefs":{"flagAccess":true}}""")
+                setBody("""{"fullname":"Alice Lab","prefs":{"vaultSync":true}}""")
             }
             assertThat(account.status).isEqualTo(HttpStatusCode.OK)
             assertThat(account.bodyAsText()).contains(Store.MASSASSIGN_L3)
+            val profile = client.get("/api/profile") { header(HttpHeaders.Authorization, "Bearer $alice") }
+            assertThat(profile.bodyAsText()).doesNotContain(Store.MASSASSIGN_L2)
         }
 
     @Test
@@ -421,7 +443,7 @@ class BackendRoutesTest {
             val account = client.post("/api/account") {
                 header(HttpHeaders.Authorization, "Bearer $alice")
                 contentType(ContentType.Application.Json)
-                setBody("""{"fullname":"Alice Lab","prefs":{"flagAccess":true}}""")
+                setBody("""{"fullname":"Alice Lab","prefs":{"vaultSync":true}}""")
             }
             assertThat(account.status).isEqualTo(HttpStatusCode.OK)
             assertThat(account.bodyAsText()).doesNotContain(Store.MASSASSIGN_L3)

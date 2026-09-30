@@ -35,8 +35,9 @@ data class AccountEnvelope(
     val prefs: PrefsFields? = null,
 )
 
+/** The nested object only the L3 exploit binds — deliberately distinct from L2's fields. */
 @Serializable
-data class PrefsFields(val flagAccess: Boolean? = null)
+data class PrefsFields(val vaultSync: Boolean? = null)
 
 @Serializable
 data class AccountDto(
@@ -44,6 +45,7 @@ data class AccountDto(
     val username: String,
     val fullname: String,
     val flagAccess: Boolean,
+    val vaultSync: Boolean,
     val secureNote: String = "",
 )
 
@@ -121,7 +123,7 @@ private fun Route.massAssignPostAccount() =
         if (!SecureMode.enabled) {
             val envelope = call.receive<AccountEnvelope>()
             envelope.fullname?.let { user.fullname = it }
-            envelope.prefs?.flagAccess?.let { user.flagAccess = it }
+            envelope.prefs?.vaultSync?.let { user.vaultSync = it }
         } else {
             // hardened: flat explicit DTO only — nested prefs never decoded
             val flat = call.receive<ProfileUpdate>()
@@ -188,7 +190,8 @@ private fun accountDto(user: User): AccountDto =
         username = user.username,
         fullname = user.fullname,
         flagAccess = user.flagAccess,
-        secureNote = if (user.flagAccess) Store.MASSASSIGN_L3 else "",
+        vaultSync = user.vaultSync,
+        secureNote = if (user.vaultSync) Store.MASSASSIGN_L3 else "",
     )
 
 private fun exposureDto(user: User): UserExposureDto =

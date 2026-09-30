@@ -8,5 +8,5 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SECURE_MODE: "off"
+      SECURE_MODE: "${SECURE_MODE:-off}"
       PORT: "8080"

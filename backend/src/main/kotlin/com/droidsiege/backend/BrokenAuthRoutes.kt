@@ -57,6 +57,12 @@ private fun Route.brokenAuthLogin() =
         }
 
         val user = Store.userByName(body.username)
+        if (user != null && user.role == "system") {
+            // the BOLA victim is a service account: refusing it in BOTH modes keeps
+            // the idor flags off any path the player can authenticate into
+            call.respond(HttpStatusCode.Forbidden, ErrorDto("service accounts cannot log in"))
+            return@post
+        }
         if (user == null || user.password != body.password) {
             Store.loginFails.merge(body.username, 1, Int::plus)
             call.respond(HttpStatusCode.Unauthorized, ErrorDto("bad credentials"))
