@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SiegeRaider — educational attacker app. Attacks NOTHING but the SiegeApp
+     lab installed on the same device. Clearly labeled in its UI. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- package visibility: we need to see whether SiegeApp is installed -->
+    <queries>
+        <package android:name="com.droidsiege" />
+    </queries>
+
+    <application
+        android:label="SiegeRaider"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity
+            android:name=".RaiderActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -24,3 +24,4 @@ rootProject.name = "DroidSiege"
 
 include(":app")
 include(":backend")
+include(":attacker")
