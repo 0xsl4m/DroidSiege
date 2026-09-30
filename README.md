@@ -88,7 +88,7 @@ See the full challenge catalog and the level design in [**docs/ARCHITECTURE.md**
 
 | Home | Category | Challenge |
 |---|---|---|
-| ![Challenge home](docs/screenshots/home.png) | ![Category](docs/screenshots/category.png) | ![Challenge](docs/screenshots/challenge.png) |
+| ![Challenge home](docs/screenshots/category_demo.png) | ![Category](docs/screenshots/category.png) | ![Challenge](docs/screenshots/challenge.png) |
 
 ## 🚀 Getting started
 
