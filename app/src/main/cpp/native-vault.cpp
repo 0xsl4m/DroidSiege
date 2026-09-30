@@ -52,14 +52,16 @@ Java_com_droidsiege_challenges_advanced_NativeVault_nativeParse(
     return out;
 }
 
-// L3 — native logging sink; the vulnerable variant uses the user string as the
-// format (kept here for the write-up; the shipped call is hardened with "%s").
+// L3 — native logging sink; the user fmt IS the format string (the bug).
 extern "C" JNIEXPORT void JNICALL
 Java_com_droidsiege_challenges_advanced_NativeVault_nativeLog(
-        JNIEnv *env, jobject, jstring fmt) {
+        JNIEnv *env, jobject, jstring fmt, jstring secret) {
     const char *f = env->GetStringUTFChars(fmt, nullptr);
-    __android_log_print(ANDROID_LOG_INFO, "SiegeNative", "%s", f);
+    const char *s = env->GetStringUTFChars(secret, nullptr);
+    // vulnerable: user fmt used directly as the format, secret as the arg
+    __android_log_print(ANDROID_LOG_INFO, "SiegeNative", f, s);
     env->ReleaseStringUTFChars(fmt, f);
+    env->ReleaseStringUTFChars(secret, s);
 }
 
 // L4 — hidden function reachable only by redirecting a controlled overflow.

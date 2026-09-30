@@ -33,7 +33,10 @@ object NativeVault {
         declaredLen: Int,
     ): ByteArray
 
-    external fun nativeLog(fmt: String)
+    external fun nativeLog(
+        fmt: String,
+        secret: String,
+    )
 
     external fun hiddenPrintFlag(): String
 }
@@ -144,6 +147,108 @@ class NativeL2Challenge : TieredChallenge(
             ) {
                 Text("Parse")
             }
+            ChallengeConsole(output)
+        }
+    }
+}
+
+class NativeL3Challenge : TieredChallenge(
+    category = "advanced",
+    slug = "native",
+    level = Difficulty.HARD,
+    title = "Format String",
+    brief = "The native log call uses the user string as the format. Leak the " +
+        "adjacent secret with %s.",
+    owaspRefs = listOf("M7", "MASVS-RESILIENCE-3", "MASTG-TEST-0x53"),
+    hints = listOf(
+        "The nativeLog(fmt, secret) call uses fmt AS the format.",
+        "Pass %s as the format to print the secret argument.",
+        "Hardened: the format is fixed; the user text is an argument.",
+    ),
+    flag = "DS{advanced_native_L3_72a1e4}",
+    learn = LearnContent(
+        theory = "Format-string vulnerabilities in native code are as dangerous as " +
+            "they are in C: %x leaks stack values and %s dereferences arbitrary " +
+            "pointers. When the user controls the format, the attacker controls " +
+            "what is printed.",
+        mastgRefs = listOf("MASVS-RESILIENCE-3", "MASTG-TEST-0x53"),
+        vulnerableSnippet = "__android_log_print(INFO, TAG, userFmt, secret)",
+        fixSnippet = "__android_log_print(INFO, TAG, \"%s\", userFmt)",
+        takeaway = "User-controlled format strings are code injection.",
+    ),
+) {
+    @Composable
+    override fun Screen(secureMode: Boolean) {
+        var output by remember { mutableStateOf("") }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = if (secureMode) {
+                    "hardened: the format is fixed; user text is an argument"
+                } else {
+                    "nativeLog(fmt, secret) — the secret is the vararg"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = {
+                output = if (!secureMode) {
+                    runCatching { NativeVault.nativeLog("%s", "DS{advanced_native_L3_72a1e4}") }
+                    "check logcat -s SiegeNative — the secret was printed via %s"
+                } else {
+                    "hardened: fixed format — %s is treated as literal text"
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Trigger native log") }
+            ChallengeConsole(output)
+        }
+    }
+}
+
+class NativeL4Challenge : TieredChallenge(
+    category = "advanced",
+    slug = "native",
+    level = Difficulty.INSANE,
+    title = "Hidden Flag Function",
+    brief = "The .so exports hiddenPrintFlag — a function with no legitimate caller. " +
+        "Reach it by controlling a function pointer via the over-read.",
+    owaspRefs = listOf("M7", "MASVS-RESILIENCE-3", "MASTG-TEST-0x53"),
+    hints = listOf(
+        "hiddenPrintFlag exists in the symbol table — check with nm or objdump.",
+        "Chain the L2 over-read to corrupt a function pointer to reach it.",
+        "Hardened builds don't export hidden functions or embed secrets.",
+    ),
+    flag = "DS{advanced_native_L4_3b96f2}",
+    learn = LearnContent(
+        theory = "Exported functions that reveal secrets are callable by anyone who " +
+            "can control a function pointer — the L2 over-read provides exactly that " +
+            "control. The export exists in the symbol table for anyone to find.\n\n" +
+            "Remove the secret function and use server-side checks.",
+        mastgRefs = listOf("MASVS-RESILIENCE-3", "MASTG-TEST-0x53"),
+        vulnerableSnippet = "extern \"C\" jstring hiddenPrintFlag(JNIEnv*, jobject)",
+        fixSnippet = "// remove the function; no secret in native code",
+        takeaway = "Every exported symbol is an invitation to the attacker.",
+    ),
+) {
+    @Composable
+    override fun Screen(secureMode: Boolean) {
+        var output by remember { mutableStateOf("") }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = if (secureMode) {
+                    "hardened: no hidden functions, no embedded secrets"
+                } else {
+                    "hiddenPrintFlag is in the symbol table — reach it via the L2 over-read"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = {
+                output = if (!secureMode) {
+                    runCatching { NativeVault.hiddenPrintFlag() }
+                        .getOrElse { "call hiddenPrintFlag via JNI or Frida" }
+                } else {
+                    "hardened: function removed"
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Try direct JNI call") }
             ChallengeConsole(output)
         }
     }
